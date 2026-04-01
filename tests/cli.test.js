@@ -148,5 +148,44 @@ describe('cli', () => {
       const result = JSON.parse(stdout);
       expect(result).toEqual({});
     });
+
+    it('--compact outputs single-line JSON', async () => {
+      const { stdout } = await run(root, '--compact');
+      expect(stdout.trim().split('\n')).toHaveLength(1);
+      const index = JSON.parse(stdout);
+      expect(Object.keys(index)).toContain('src/math.js');
+    });
+
+    it('--pretty outputs indented JSON', async () => {
+      const { stdout } = await run(root, '--pretty');
+      const lines = stdout.trim().split('\n');
+      expect(lines.length).toBeGreaterThan(1);
+      expect(stdout).toContain('  ');
+      const index = JSON.parse(stdout);
+      expect(Object.keys(index)).toContain('src/math.js');
+    });
+
+    it('--compact with -o still writes compact JSON to file', async () => {
+      const outFile = join(root, 'compact.json');
+      await run(root, '-o', outFile, '--compact');
+      const content = readFileSync(outFile, 'utf-8');
+      expect(content.trim().split('\n')).toHaveLength(1);
+      JSON.parse(content);
+    });
+
+    it('--pretty with -o writes pretty JSON to file', async () => {
+      const outFile = join(root, 'pretty.json');
+      await run(root, '-o', outFile, '--pretty');
+      const content = readFileSync(outFile, 'utf-8');
+      expect(content.trim().split('\n').length).toBeGreaterThan(1);
+      JSON.parse(content);
+    });
+
+    it('piped output (non-TTY) defaults to compact JSON', async () => {
+      // When run via exec (no TTY), stdout should be compact
+      const { stdout } = await run(root);
+      expect(stdout.trim().split('\n')).toHaveLength(1);
+      JSON.parse(stdout);
+    });
   });
 });

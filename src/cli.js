@@ -13,6 +13,8 @@ Options:
   --file <path>             Show detail for a single source file
   --dependents-of <path>    List files that import the given module
   --dependencies-of <path>  List modules imported by the given file
+  --compact                 Force compact (single-line) JSON output
+  --pretty                  Force pretty-printed JSON output
   --help, -h                Show this help message
   --version, -v             Show version`
 
@@ -32,6 +34,10 @@ function parseArgs(argv) {
       parsed.dependentsOf = argv[++i]
     else if (arg === '--dependencies-of')
       parsed.dependenciesOf = argv[++i]
+    else if (arg === '--compact')
+      parsed.compact = true
+    else if (arg === '--pretty')
+      parsed.pretty = true
     else if (!arg.startsWith('-'))
       parsed.dir = arg
   }
@@ -56,10 +62,18 @@ function scanDependencies(args, index) {
   return entry ? { [args.dependenciesOf]: entry.dependencies } : {}
 }
 
-function output(data, outputPath) {
-  const json = JSON.stringify(data, null, 2) + '\n'
-  if (outputPath)
-    writeFileSync(outputPath, json)
+function shouldPrettyPrint(args) {
+  if (args.pretty) return true
+  if (args.compact) return false
+  if (args.output) return true
+  return Boolean(process.stdout.isTTY)
+}
+
+function output(data, args) {
+  const indent = shouldPrettyPrint(args) ? 2 : undefined
+  const json = JSON.stringify(data, null, indent) + '\n'
+  if (args.output)
+    writeFileSync(args.output, json)
   else
     process.stdout.write(json)
 }
@@ -67,7 +81,7 @@ function output(data, outputPath) {
 async function doScan(args) {
   const { scan } = await import('./scan.js')
   const index = await scan(resolve(args.dir || '.'))
-  const writeOut = data => output(data, args.output)
+  const writeOut = data => output(data, args)
 
   if (args.file)
     writeOut(scanFile(args, index))

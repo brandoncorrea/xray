@@ -13,20 +13,23 @@ npm install -g xray
 ## Usage
 
 ```bash
-# Scan a directory, output JSON to stdout
-xray <dir>
+# Scan current directory, output JSON to stdout
+xray
+
+# Scan a specific directory
+xray backend/
 
 # Write output to a file
-xray <dir> -o index.json
+xray backend/ -o index.json
 
 # Show detail for a single file
-xray <dir> --file src/handlers/feed.js
+xray backend/ --file src/handlers/feed.js
 
 # Find all files that import a given module
-xray <dir> --dependents-of src/db.js
+xray backend/ --dependents-of src/db.js
 
 # Find all modules a given file imports
-xray <dir> --dependencies-of src/db.js
+xray backend/ --dependencies-of src/db.js
 ```
 
 ## Output Format
@@ -66,7 +69,7 @@ Example output:
 
 | Flag                        | Description                                      |
 |-----------------------------|--------------------------------------------------|
-| `<dir>`                     | Root directory to scan (required)                |
+| `[dir]`                     | Root directory to scan (default: `.`)             |
 | `-o, --output <file>`       | Write JSON to a file instead of stdout           |
 | `--file <path>`             | Show detail for a single source file             |
 | `--dependents-of <path>`    | List files that import the given module           |

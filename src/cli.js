@@ -5,10 +5,10 @@ import { resolve } from 'node:path'
 
 const HELP = `xray - dependency analysis tool
 
-Usage: xray <dir> [options]
+Usage: xray [dir] [options]
 
 Options:
-  <dir>                     Root directory to scan (required)
+  [dir]                     Root directory to scan (default: current directory)
   -o, --output <file>       Write JSON to file instead of stdout
   --file <path>             Show detail for a single source file
   --dependents-of <path>    List files that import the given module
@@ -56,13 +56,8 @@ async function main(argv) {
     return 0
   }
 
-  if (!args.dir) {
-    process.stderr.write('Usage: xray <dir> [options]\n')
-    return 1
-  }
-
   const { scan } = await import('./scan.js')
-  const dir = resolve(args.dir)
+  const dir = resolve(args.dir || '.')
   const index = await scan(dir)
 
   if (args.file) {

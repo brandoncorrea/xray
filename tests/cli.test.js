@@ -14,13 +14,6 @@ function run(...args) {
   return exec('node', [cli, ...args]);
 }
 
-function runExpectFail(...args) {
-  return exec('node', [cli, ...args]).then(
-    () => { throw new Error('expected non-zero exit'); },
-    (err) => err
-  );
-}
-
 function setupFixture(files) {
   const root = mkdtempSync(join(tmpdir(), 'xray-cli-'));
   for (const [filePath, content] of Object.entries(files)) {
@@ -52,10 +45,11 @@ describe('cli', () => {
     expect(stdout.trim()).toMatch(/^\d+\.\d+\.\d+$/);
   });
 
-  it('prints usage and exits 1 with no args', async () => {
-    const err = await runExpectFail();
-    expect(err.code).toBe(1);
-    expect(err.stderr || err.stdout).toContain('Usage');
+  it('scans current directory when no dir argument given', async () => {
+    const { stdout } = await run();
+    const index = JSON.parse(stdout);
+    expect(index['src/cli.js']).toBeDefined();
+    expect(index['src/index.js']).toBeDefined();
   });
 
   describe('with fixture directory', () => {

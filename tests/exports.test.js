@@ -68,7 +68,7 @@ describe('extractExports', () => {
   });
 
   it('extracts aliased named exports', () => {
-    const { file, cleanup } = withTempFile("export { internal as external };\n");
+    const { file, cleanup } = withTempFile("const internal = 1;\nexport { internal as external };\n");
     try {
       expect(extractExports(file)).toEqual(['external']);
     } finally {
@@ -130,6 +130,55 @@ describe('extractExports', () => {
       expect(extractExports(file)).toEqual(['a', 'b']);
     } finally {
       cleanup();
+    }
+  });
+
+  it('extracts exports from minified single-line file', () => {
+    const { file, cleanup } = withTempFile('export const a=1;export function b(){}export class C{}');
+    try {
+      expect(extractExports(file)).toEqual(['a', 'b', 'C']);
+    } finally {
+      cleanup();
+    }
+  });
+
+  it('ignores block comments containing export syntax', () => {
+    const source = '/* export const fake = 1; */\nexport const real = 2;\n';
+    const { file, cleanup } = withTempFile(source);
+    try {
+      expect(extractExports(file)).toEqual(['real']);
+    } finally {
+      cleanup();
+    }
+  });
+
+  it('extracts multi-line export list', () => {
+    const source = [
+      'const a = 1;',
+      'const b = 2;',
+      'const c = 3;',
+      'export {',
+      '  a,',
+      '  b,',
+      '  c',
+      '};',
+    ].join('\n');
+    const { file, cleanup } = withTempFile(source);
+    try {
+      expect(extractExports(file)).toEqual(['a', 'b', 'c']);
+    } finally {
+      cleanup();
+    }
+  });
+
+  it('extracts exports from JSX file', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'xray-exports-'));
+    const file = join(dir, 'component.jsx');
+    writeFileSync(file, 'export function App() { return <div />; }\nexport const name = "app";\n');
+    try {
+      expect(extractExports(file)).toEqual(['App', 'name']);
+    } finally {
+      rmSync(dir, { recursive: true });
     }
   });
 });

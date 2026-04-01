@@ -1,42 +1,48 @@
 import { readFileSync } from 'node:fs'
+import { Parser } from 'acorn'
+import acornJsx from 'acorn-jsx'
 
-const DECLARATION_RE = /^export\s+(?:async\s+)?(?:const|let|var|function|class)\s+(\w+)/
-const NAMED_LIST_RE = /^export\s*\{([^}]+)\}/
+const jsxParser = Parser.extend(acornJsx())
 
-function shouldIgnoreLine(line) {
-  return line.startsWith('//') || line.startsWith('export default')
-}
-
-function exportFromListEntry(entry) {
-  const parts = entry.trim().split(/\s+as\s+/)
-  const part = parts.length > 1 ? 1 : 0
-  return parts[part].trim()
-}
-
-function exportsFromNamedList(listMatch) {
-  return listMatch[1]
-    .split(',')
-    .map(exportFromListEntry)
-}
-
-function exportsFromLine(line) {
-  const trimmed = line.trim()
-
-  if (shouldIgnoreLine(trimmed)) return
-
-  const declMatch = trimmed.match(DECLARATION_RE)
-  if (declMatch)
-    return [declMatch[1]]
-
-  const listMatch = trimmed.match(NAMED_LIST_RE)
-  if (listMatch)
-    return exportsFromNamedList(listMatch)
+function nameFromDeclaration(declaration) {
+  if (!declaration) return []
+  switch (declaration.type) {
+    case 'VariableDeclaration':
+      return declaration.declarations.map(d => d.id.name)
+    case 'FunctionDeclaration':
+    case 'ClassDeclaration':
+      return declaration.id ? [declaration.id.name] : []
+    default:
+      return []
+  }
 }
 
 export function extractExports(filePath) {
-  return readFileSync(filePath, 'utf-8')
-    .split('\n')
-    .map(exportsFromLine)
-    .filter(Boolean)
-    .reduce((all, exports) => [...all, ...exports], [])
+  const source = readFileSync(filePath, 'utf-8')
+  const isJsx = filePath.endsWith('.jsx') || filePath.endsWith('.tsx')
+  const parser = isJsx ? jsxParser : Parser
+
+  let ast
+  try {
+    ast = parser.parse(source, {
+      sourceType: 'module',
+      ecmaVersion: 'latest',
+    })
+  } catch {
+    return []
+  }
+
+  const exports = []
+  for (const node of ast.body) {
+    if (node.type === 'ExportNamedDeclaration') {
+      if (node.declaration) {
+        exports.push(...nameFromDeclaration(node.declaration))
+      }
+      for (const spec of node.specifiers) {
+        const name = spec.exported.name ?? spec.exported.value
+        exports.push(name)
+      }
+    }
+  }
+  return exports
 }

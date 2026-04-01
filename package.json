@@ -1,0 +1,17 @@
+{
+  "name": "xray",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "xray": "./src/cli.js"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "madge": "^8.0.0"
+  },
+  "devDependencies": {
+    "vitest": "^3.1.1"
+  }
+}

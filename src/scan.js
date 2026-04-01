@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import madge from 'madge'
 import { extractExports } from './exports.js'
 import { findTestFiles } from './testFiles.js'
+import { loadConfig } from './config.js'
 
 function getLineCount(path) {
   const content = readFileSync(path, 'utf-8')
@@ -15,7 +16,7 @@ function toRelPath(path) {
   return `src/${path}`
 }
 
-async function buildIndex(directory, srcDir) {
+async function buildIndex(directory, srcDir, config) {
   const res = await madge(srcDir)
   const graph = res.obj()
   const index = {}
@@ -36,8 +37,9 @@ async function buildIndex(directory, srcDir) {
 }
 
 export async function scan(directory) {
+  const config = await loadConfig(directory)
   const srcDir = join(directory, 'src')
   if (existsSync(srcDir))
-    return buildIndex(directory, srcDir)  
+    return buildIndex(directory, srcDir, config)
   return {}
 }

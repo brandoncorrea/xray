@@ -9,7 +9,7 @@ describe('DEFAULTS', () => {
     expect(DEFAULTS).toEqual({
       extensions: ['.js'],
       exclude: [],
-      testPatterns: ['tests/**/*.test.*', '**/*.test.*'],
+      testPatterns: ['tests/**/*.test.*', '**/*.test.*']
     })
   })
 })

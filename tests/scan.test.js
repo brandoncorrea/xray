@@ -79,6 +79,23 @@ describe('scan', () => {
     expect(result).toEqual({});
   });
 
+  it('normalizes paths that escape the scan root', async () => {
+    root = setupFixture({
+      'src/app.js': [
+        "import { env } from '../shared/env.js';",
+        'export function start() { return env; }',
+      ].join('\n'),
+      'shared/env.js': [
+        'export const env = "production";',
+      ].join('\n'),
+    });
+
+    const result = await scan(root);
+
+    // External dep should appear as clean path relative to project root
+    expect(result['src/app.js'].dependencies).toEqual(['shared/env.js']);
+  });
+
   it('handles file with no exports', async () => {
     root = setupFixture({
       'src/side-effect.js': "console.log('init');\n",

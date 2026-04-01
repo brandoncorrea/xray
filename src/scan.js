@@ -17,18 +17,18 @@ function toRelPath(path) {
 }
 
 async function buildIndex(directory, srcDir, config) {
-  const res = await madge(srcDir)
+  const res = await madge(srcDir, { baseDir: directory })
   const graph = res.obj()
   const index = {}
 
   for (const file of Object.keys(graph)) {
-    const relPath = toRelPath(file)
-    const absPath = join(directory, relPath)
-    index[relPath] = {
+    if (!file.startsWith('src/')) continue
+    const absPath = join(directory, file)
+    index[file] = {
       exports: extractExports(absPath),
-      dependencies: graph[file].map(toRelPath),
-      dependents: res.depends(file).map(toRelPath),
-      tests: findTestFiles(relPath, directory),
+      dependencies: graph[file],
+      dependents: res.depends(file),
+      tests: findTestFiles(file, directory),
       lines: getLineCount(absPath)
     }
   }

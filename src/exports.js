@@ -1,34 +1,35 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs'
 
-const DECLARATION_RE = /^export\s+(?:async\s+)?(?:const|let|var|function|class)\s+(\w+)/;
-const NAMED_LIST_RE = /^export\s*\{([^}]+)\}/;
+const DECLARATION_RE = /^export\s+(?:async\s+)?(?:const|let|var|function|class)\s+(\w+)/
+const NAMED_LIST_RE = /^export\s*\{([^}]+)\}/
+
+function shouldIgnoreLine(line) {
+  return line.startsWith('//') || line.startsWith('export default')
+}
+
+function exportsFromLine(line) {
+  const trimmed = line.trim()
+
+  if (shouldIgnoreLine(trimmed)) return
+
+  const declMatch = trimmed.match(DECLARATION_RE)
+  if (declMatch)
+    return [declMatch[1]]
+
+  const listMatch = trimmed.match(NAMED_LIST_RE)
+  if (listMatch)
+    return listMatch[1].split(',').map(entry => {
+      const parts = entry.trim().split(/\s+as\s+/)
+      const part = parts.length > 1 ? 1 : 0
+      return parts[part].trim()
+    })
+  return
+}
 
 export function extractExports(filePath) {
-  const source = readFileSync(filePath, 'utf-8');
-  const lines = source.split('\n');
-  const exports = [];
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-
-    if (trimmed.startsWith('//')) continue;
-    if (trimmed.startsWith('export default')) continue;
-
-    const declMatch = trimmed.match(DECLARATION_RE);
-    if (declMatch) {
-      exports.push(declMatch[1]);
-      continue;
-    }
-
-    const listMatch = trimmed.match(NAMED_LIST_RE);
-    if (listMatch) {
-      const names = listMatch[1].split(',').map((entry) => {
-        const parts = entry.trim().split(/\s+as\s+/);
-        return parts.length > 1 ? parts[1].trim() : parts[0].trim();
-      });
-      exports.push(...names);
-    }
-  }
-
-  return exports;
+  return readFileSync(filePath, 'utf-8')
+    .split('\n')
+    .map(exportsFromLine)
+    .filter(Boolean)
+    .reduce((all, exports) => [...all, ...exports], [])
 }

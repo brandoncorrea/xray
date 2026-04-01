@@ -7,6 +7,18 @@ function shouldIgnoreLine(line) {
   return line.startsWith('//') || line.startsWith('export default')
 }
 
+function exportFromListEntry(entry) {
+  const parts = entry.trim().split(/\s+as\s+/)
+  const part = parts.length > 1 ? 1 : 0
+  return parts[part].trim()
+}
+
+function exportsFromNamedList(listMatch) {
+  return listMatch[1]
+    .split(',')
+    .map(exportFromListEntry)
+}
+
 function exportsFromLine(line) {
   const trimmed = line.trim()
 
@@ -18,12 +30,7 @@ function exportsFromLine(line) {
 
   const listMatch = trimmed.match(NAMED_LIST_RE)
   if (listMatch)
-    return listMatch[1].split(',').map(entry => {
-      const parts = entry.trim().split(/\s+as\s+/)
-      const part = parts.length > 1 ? 1 : 0
-      return parts[part].trim()
-    })
-  return
+    return exportsFromNamedList(listMatch)
 }
 
 export function extractExports(filePath) {

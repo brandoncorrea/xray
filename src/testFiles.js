@@ -4,6 +4,41 @@ import { join, dirname, basename, extname } from 'node:path'
 const TEST_SUFFIXES = ['.spec', '.test']
 const TEST_EXTENSIONS = ['.js', '.jsx']
 
+function testMatchingSelf(nameWithoutExt) {
+  return TEST_SUFFIXES.find(
+    suffix => nameWithoutExt.endsWith(suffix))
+}
+
+function mirrorDirectory(dir) {
+  // Strip leading src/ to get the relative path within src
+  const relPath = dir === 'src' ? ''
+    : dir.startsWith('src/') ? dir.slice(4)
+    : dir
+
+  return relPath ? join('tests', relPath) : 'tests'
+}
+
+function findTestsFromSources(sourceFile, projectRoot, nameWithoutExt) {
+  const dir = dirname(sourceFile)
+  const mirrorDir = mirrorDirectory(dir)
+  const candidates = []
+
+  for (const testExt of TEST_EXTENSIONS) {
+    for (const suffix of TEST_SUFFIXES) {
+      const testName = `${nameWithoutExt}${suffix}${testExt}`
+      candidates.push(
+        join(mirrorDir, testName),
+        join(dir, testName))
+    }
+  }
+
+  const found = candidates.filter(
+    candidate => existsSync(join(projectRoot, candidate))
+  )
+
+  return [...new Set(found)].sort()
+}
+
 /**
  * Find test files associated with a source file by convention.
  *
@@ -16,40 +51,9 @@ const TEST_EXTENSIONS = ['.js', '.jsx']
  * @returns {string[]} Sorted array of matching test file paths (relative)
  */
 export function findTestFiles(sourceFile, projectRoot) {
-  const dir = dirname(sourceFile)
   const ext = extname(sourceFile)
   const nameWithoutExt = basename(sourceFile, ext)
-
-  // Don't match test files to themselves
-  for (const suffix of TEST_SUFFIXES)
-    if (nameWithoutExt.endsWith(suffix))
-      return []
-
-  // Strip leading src/ to get the relative path within src
-  const relPath = dir === 'src' ? ''
-    : dir.startsWith('src/') ? dir.slice(4)
-    : dir
-
-  const candidates = []
-
-  for (const testExt of TEST_EXTENSIONS) {
-    for (const suffix of TEST_SUFFIXES) {
-      const testName = `${nameWithoutExt}${suffix}${testExt}`
-
-      // Mirror structure: tests/<relPath>/<name>.test.ext
-      const mirrorDir = relPath ? join('tests', relPath) : 'tests'
-      const mirrorPath = join(mirrorDir, testName)
-      candidates.push(mirrorPath)
-
-      // Co-located: <dir>/<name>.test.ext
-      const colocatedPath = join(dir, testName)
-      candidates.push(colocatedPath)
-    }
-  }
-
-  const found = candidates.filter(
-    candidate => existsSync(join(projectRoot, candidate))
-  )
-
-  return [...new Set(found)].sort()
+  if (testMatchingSelf(nameWithoutExt))
+    return []
+  return findTestsFromSources(sourceFile, projectRoot, nameWithoutExt)
 }

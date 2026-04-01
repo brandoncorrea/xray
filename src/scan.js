@@ -1,37 +1,43 @@
-import { readFileSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
-import madge from 'madge';
-import { extractExports } from './exports.js';
-import { findTestFiles } from './testFiles.js';
+import { readFileSync, existsSync } from 'node:fs'
+import { join } from 'node:path'
+import madge from 'madge'
+import { extractExports } from './exports.js'
+import { findTestFiles } from './testFiles.js'
 
-export async function scan(directory) {
-  const srcDir = join(directory, 'src');
-  if (!existsSync(srcDir)) return {};
+function getLineCount(path) {
+  const content = readFileSync(path, 'utf-8')
+  return content === '' ? 0
+    : content.endsWith('\n') ? content.split('\n').length - 1
+    : content.split('\n').length
+}
 
-  const res = await madge(srcDir);
-  const graph = res.obj();
+function toRelPath(path) {
+  return `src/${path}`
+}
 
-  if (Object.keys(graph).length === 0) return {};
-
-  const index = {};
+async function buildIndex(directory, srcDir) {
+  const res = await madge(srcDir)
+  const graph = res.obj()
+  const index = {}
 
   for (const file of Object.keys(graph)) {
-    const relPath = `src/${file}`;
-    const absPath = join(directory, relPath);
-
-    const content = readFileSync(absPath, 'utf-8');
-    const lineCount = content === '' ? 0
-      : content.endsWith('\n') ? content.split('\n').length - 1
-      : content.split('\n').length;
-
+    const relPath = toRelPath(file)
+    const absPath = join(directory, relPath)
     index[relPath] = {
       exports: extractExports(absPath),
-      dependencies: graph[file].map(d => `src/${d}`),
-      dependents: res.depends(file).map(d => `src/${d}`),
+      dependencies: graph[file].map(toRelPath),
+      dependents: res.depends(file).map(toRelPath),
       tests: findTestFiles(relPath, directory),
-      lines: lineCount,
-    };
+      lines: getLineCount(absPath)
+    }
   }
 
-  return index;
+  return index
+}
+
+export async function scan(directory) {
+  const srcDir = join(directory, 'src')
+  if (existsSync(srcDir))
+    return buildIndex(directory, srcDir)  
+  return {}
 }

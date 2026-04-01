@@ -5,7 +5,13 @@ import { pathToFileURL } from 'node:url'
 export const DEFAULTS = {
   extensions: ['.js'],
   exclude: [],
-  testPatterns: ['tests/**/*.test.*', '**/*.test.*'],
+  testPatterns: ['tests/**/*.test.*', '**/*.test.*']
+}
+
+async function buildUserConfig(configPath) {
+  const url = pathToFileURL(configPath).href
+  const mod = await import(url)
+  return mod.default || {}
 }
 
 export async function loadConfig(dir) {
@@ -13,9 +19,7 @@ export async function loadConfig(dir) {
   if (!existsSync(configPath))
     return { ...DEFAULTS }
 
-  const url = pathToFileURL(configPath).href
-  const mod = await import(url)
-  const userConfig = mod.default || {}
+  const userConfig = await buildUserConfig(configPath)
 
   return { ...DEFAULTS, ...userConfig }
 }

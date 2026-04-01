@@ -65,8 +65,7 @@ function scanDependencies(args, index) {
 function shouldPrettyPrint(args) {
   if (args.pretty) return true
   if (args.compact) return false
-  if (args.output) return true
-  return Boolean(process.stdout.isTTY)
+  return args.output || Boolean(process.stdout.isTTY)
 }
 
 function output(data, args) {

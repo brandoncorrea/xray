@@ -62,6 +62,24 @@ describe('main', () => {
     }
   })
 
+  it('defaults to scanning current directory when no dir argument given', async () => {
+    const root = setupFixture({
+      'src/hello.js': 'export function hello() {}\n'
+    })
+    const cap = captureStdout()
+    const origCwd = process.cwd()
+    try {
+      process.chdir(root)
+      await main(['--compact'])
+      const index = JSON.parse(cap.output())
+      expect(Object.keys(index)).toEqual(['src/hello.js'])
+    } finally {
+      process.chdir(origCwd)
+      cap.restore()
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
   describe('with fixture directory', () => {
     let root
 

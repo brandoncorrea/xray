@@ -128,6 +128,11 @@ describe('extractExports', () => {
     expect(nameFromDeclaration(node)).toEqual([])
   })
 
+  it('extracts string-literal aliased export name', () => {
+    const file = writeTempFile("const foo = 1\nexport { foo as 'bar-baz' }\n")
+    expect(extractExports(file)).toEqual(['bar-baz'])
+  })
+
   it('extracts exports from JSX file', () => {
     const file = writeTempFile('export function App() { return <div /> }\nexport const name = "app"\n', 'component.jsx')
     expect(extractExports(file)).toEqual(['App', 'name'])

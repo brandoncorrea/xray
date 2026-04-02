@@ -262,6 +262,17 @@ describe('scan', () => {
     expect(Object.keys(result).sort()).toEqual(['shared/utils.js', 'src/app.js'])
   })
 
+  it('empty options.include does not override config include', async () => {
+    root = setupFixture({
+      'src/app.js': 'export function main() {}\n',
+      'vendor/lib.js': 'export function lib() {}\n',
+      'xray.config.js': "export default { include: ['src'] }\n"
+    })
+
+    const result = await scan(root, { include: [] })
+    expect(Object.keys(result)).toEqual(['src/app.js'])
+  })
+
   it('merges CLI exclude with config exclude', async () => {
     root = setupFixture({
       'src/app.js': 'export function main() {}\n',

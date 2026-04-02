@@ -132,4 +132,9 @@ it('extracts string-literal aliased export name', () => {
     const file = writeTempFile('export function App() { return <div /> }\nexport const name = "app"\n', 'component.jsx')
     expect(extractExports(file)).toEqual(['App', 'name'])
   })
+
+  it('extracts exports from TSX file', () => {
+    const file = writeTempFile('export function Page() { return <main /> }\nexport const route = "/home"\n', 'page.tsx')
+    expect(extractExports(file)).toEqual(['Page', 'route'])
+  })
 })

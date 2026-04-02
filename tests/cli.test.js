@@ -189,4 +189,62 @@ describe('cli', () => {
       JSON.parse(stdout)
     })
   })
+
+  describe('--exclude', () => {
+    let root
+
+    beforeAll(() => {
+      root = setupFixture({
+        'src/app.js': [
+          "import { helper } from './utils/helper.js';",
+          'export function main() { return helper(); }'
+        ].join('\n'),
+        'src/utils/helper.js': 'export function helper() { return 1; }\n',
+        'src/coverage/report.js': 'export function report() {}\n',
+        'src/scripts/build.js': 'export function build() {}\n'
+      })
+    })
+
+    afterAll(() => {
+      if (root) rmSync(root, { recursive: true, force: true })
+    })
+
+    it('--exclude skips matching directories', async () => {
+      const { stdout } = await run(root, '--exclude', 'coverage')
+      const index = JSON.parse(stdout)
+      expect(Object.keys(index)).not.toContain('src/coverage/report.js')
+      expect(Object.keys(index)).toContain('src/app.js')
+    })
+
+    it('multiple --exclude flags are additive', async () => {
+      const { stdout } = await run(root, '--exclude', 'coverage', '--exclude', 'scripts')
+      const index = JSON.parse(stdout)
+      expect(Object.keys(index)).not.toContain('src/coverage/report.js')
+      expect(Object.keys(index)).not.toContain('src/scripts/build.js')
+      expect(Object.keys(index)).toContain('src/app.js')
+    })
+
+    it('--exclude is additive with config.exclude', async () => {
+      const rootWithConfig = setupFixture({
+        'src/app.js': 'export function main() {}\n',
+        'src/coverage/report.js': 'export function report() {}\n',
+        'src/scripts/build.js': 'export function build() {}\n',
+        'xray.config.js': "export default { exclude: ['coverage'] }\n"
+      })
+      try {
+        const { stdout } = await run(rootWithConfig, '--exclude', 'scripts')
+        const index = JSON.parse(stdout)
+        expect(Object.keys(index)).not.toContain('src/coverage/report.js')
+        expect(Object.keys(index)).not.toContain('src/scripts/build.js')
+        expect(Object.keys(index)).toContain('src/app.js')
+      } finally {
+        rmSync(rootWithConfig, { recursive: true, force: true })
+      }
+    })
+  })
+
+  it('--help shows --exclude in usage', async () => {
+    const { stdout } = await run('--help')
+    expect(stdout).toContain('--exclude')
+  })
 })

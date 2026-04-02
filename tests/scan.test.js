@@ -106,4 +106,44 @@ describe('scan', () => {
     expect(result['src/side-effect.js'].exports).toEqual([])
     expect(result['src/side-effect.js'].lines).toBe(1)
   })
+
+  it('excludes directories matching exclude patterns', async () => {
+    root = setupFixture({
+      'src/app.js': 'export function main() {}\n',
+      'src/coverage/report.js': 'export function report() {}\n',
+      'src/scripts/build.js': 'export function build() {}\n'
+    })
+
+    const result = await scan(root, { exclude: ['coverage'] })
+    expect(Object.keys(result)).not.toContain('src/coverage/report.js')
+    expect(Object.keys(result)).toContain('src/app.js')
+    expect(Object.keys(result)).toContain('src/scripts/build.js')
+  })
+
+  it('excludes multiple directories', async () => {
+    root = setupFixture({
+      'src/app.js': 'export function main() {}\n',
+      'src/coverage/report.js': 'export function report() {}\n',
+      'src/scripts/build.js': 'export function build() {}\n'
+    })
+
+    const result = await scan(root, { exclude: ['coverage', 'scripts'] })
+    expect(Object.keys(result)).not.toContain('src/coverage/report.js')
+    expect(Object.keys(result)).not.toContain('src/scripts/build.js')
+    expect(Object.keys(result)).toContain('src/app.js')
+  })
+
+  it('merges CLI exclude with config exclude', async () => {
+    root = setupFixture({
+      'src/app.js': 'export function main() {}\n',
+      'src/coverage/report.js': 'export function report() {}\n',
+      'src/scripts/build.js': 'export function build() {}\n',
+      'xray.config.js': "export default { exclude: ['coverage'] }\n"
+    })
+
+    const result = await scan(root, { exclude: ['scripts'] })
+    expect(Object.keys(result)).not.toContain('src/coverage/report.js')
+    expect(Object.keys(result)).not.toContain('src/scripts/build.js')
+    expect(Object.keys(result)).toContain('src/app.js')
+  })
 })

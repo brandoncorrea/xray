@@ -13,6 +13,7 @@ Options:
   --file <path>             Show detail for a single source file
   --dependents-of <path>    List files that import the given module
   --dependencies-of <path>  List modules imported by the given file
+  --exclude <dir>           Skip directory during scan (repeatable)
   --compact                 Force compact (single-line) JSON output
   --pretty                  Force pretty-printed JSON output
   --help, -h                Show this help message
@@ -34,6 +35,10 @@ function parseArgs(argv) {
       parsed.dependentsOf = argv[++i]
     else if (arg === '--dependencies-of')
       parsed.dependenciesOf = argv[++i]
+    else if (arg === '--exclude') {
+      if (!parsed.exclude) parsed.exclude = []
+      parsed.exclude.push(argv[++i])
+    }
     else if (arg === '--compact')
       parsed.compact = true
     else if (arg === '--pretty')
@@ -79,7 +84,9 @@ function output(data, args) {
 
 async function doScan(args) {
   const { scan } = await import('./scan.js')
-  const index = await scan(resolve(args.dir || '.'))
+  const options = {}
+  if (args.exclude) options.exclude = args.exclude
+  const index = await scan(resolve(args.dir || '.'), options)
   const writeOut = data => output(data, args)
 
   if (args.file)

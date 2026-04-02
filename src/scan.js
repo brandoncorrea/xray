@@ -7,9 +7,9 @@ import { loadConfig } from './config.js'
 
 function getLineCount(path) {
   const content = readFileSync(path, 'utf-8')
-  return content === '' ? 0
-    : content.endsWith('\n') ? content.split('\n').length - 1
-    : content.split('\n').length
+  if (content === '') return 0
+  const lines = content.split('\n')
+  return content.endsWith('\n') ? lines.length - 1 : lines.length
 }
 
 function buildExcludeRegExp(patterns) {

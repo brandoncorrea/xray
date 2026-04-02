@@ -118,6 +118,11 @@ describe('extractExports', () => {
     expect(extractExports(file)).toEqual(['a', 'b', 'c'])
   })
 
+  it('returns empty array for malformed JS that acorn cannot parse', () => {
+    const file = writeTempFile('export const = ;; {{{')
+    expect(extractExports(file)).toEqual([])
+  })
+
   it('extracts exports from JSX file', () => {
     const file = writeTempFile('export function App() { return <div /> }\nexport const name = "app"\n', 'component.jsx')
     expect(extractExports(file)).toEqual(['App', 'name'])

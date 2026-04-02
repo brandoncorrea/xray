@@ -20,6 +20,11 @@ describe('cli binary (end-to-end)', () => {
     expect(stdout).toContain('Usage: xray')
   })
 
+  it('--help exits early without scanning', async () => {
+    const { stdout } = await run('--help')
+    expect(stdout).not.toContain('{')
+  })
+
   it('runs a scan and produces valid JSON', async () => {
     let root
     try {

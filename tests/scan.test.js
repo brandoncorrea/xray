@@ -35,7 +35,9 @@ describe('scan', () => {
     expect(Object.keys(result).sort()).toEqual([
       'src/calc.js',
       'src/main.js',
-      'src/math.js'
+      'src/math.js',
+      'tests/calc.test.js',
+      'tests/math.test.js'
     ])
 
     // math.js
@@ -102,7 +104,8 @@ describe('scan', () => {
 
     expect(Object.keys(result).sort()).toEqual([
       'src/App.jsx',
-      'src/components/Button.jsx'
+      'src/components/Button.jsx',
+      'tests/components/Button.test.jsx'
     ])
 
     expect(result['src/App.jsx'].exports).toEqual(['App'])
@@ -169,6 +172,38 @@ describe('scan', () => {
       'src/app.js',
       'src/vendor/lib.js'
     ])
+  })
+
+  it('scans files without requiring a src/ directory', async () => {
+    root = setupFixture({
+      'lib/utils.js': 'export function helper() {}\n',
+      'app.js': [
+        "import { helper } from './lib/utils.js'",
+        'export function main() { return helper() }'
+      ].join('\n')
+    })
+
+    const result = await scan(root)
+    expect(Object.keys(result).sort()).toEqual(['app.js', 'lib/utils.js'])
+    expect(result['app.js'].exports).toEqual(['main'])
+    expect(result['app.js'].dependencies).toEqual(['lib/utils.js'])
+    expect(result['lib/utils.js'].exports).toEqual(['helper'])
+    expect(result['lib/utils.js'].dependents).toEqual(['app.js'])
+  })
+
+  it('includes cross-boundary files in the index', async () => {
+    root = setupFixture({
+      'src/app.js': [
+        "import { env } from '../shared/env.js'",
+        'export function start() { return env }'
+      ].join('\n'),
+      'shared/env.js': 'export const env = "production"\n'
+    })
+
+    const result = await scan(root)
+    expect(result['shared/env.js']).toBeDefined()
+    expect(result['shared/env.js'].exports).toEqual(['env'])
+    expect(result['shared/env.js'].dependents).toEqual(['src/app.js'])
   })
 
   it('merges CLI exclude with config exclude', async () => {

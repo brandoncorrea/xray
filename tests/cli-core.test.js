@@ -114,7 +114,7 @@ describe('main', () => {
       await main([root, '--compact'])
       const index = JSON.parse(cap.output())
       expect(Object.keys(index).sort()).toEqual([
-        'src/calc.js', 'src/main.js', 'src/math.js'
+        'src/calc.js', 'src/main.js', 'src/math.js', 'tests/math.test.js'
       ])
       expect(index['src/math.js'].exports).toEqual(['add', 'subtract'])
     })

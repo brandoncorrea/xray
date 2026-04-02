@@ -1,4 +1,4 @@
-import { readFileSync, existsSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import madge from 'madge'
 import { extractExports } from './exports.js'
@@ -30,7 +30,6 @@ async function buildIndex(baseDir, srcDir, config) {
   const index = {}
 
   for (const file of Object.keys(graph)) {
-    if (!file.startsWith('src/')) continue
     const absPath = join(baseDir, file)
     index[file] = {
       exports: extractExports(absPath),
@@ -52,8 +51,5 @@ export async function scan(directory, options = {}) {
   const config = await loadConfig(directory)
   if (options.exclude?.length)
     config.exclude = distinctConcat(config.exclude, options.exclude)
-  const srcDir = join(directory, 'src')
-  if (existsSync(srcDir))
-    return buildIndex(directory, srcDir, config)
-  return {}
+  return buildIndex(directory, directory, config)
 }

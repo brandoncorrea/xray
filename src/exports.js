@@ -4,7 +4,7 @@ import acornJsx from 'acorn-jsx'
 
 const jsxParser = Parser.extend(acornJsx())
 
-function nameFromDeclaration({ type, declarations, id }) {
+export function nameFromDeclaration({ type, declarations, id }) {
   if (type === 'VariableDeclaration')
     return declarations.map(d => d.id.name)
   if (type === 'FunctionDeclaration' || type === 'ClassDeclaration')

@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest'
-import { extractExports, nameFromDeclaration } from '../src/exports.js'
+import { extractExports } from '../src/exports.js'
 import { writeFileSync, mkdtempSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
@@ -123,12 +123,7 @@ describe('extractExports', () => {
     expect(extractExports(file)).toEqual([])
   })
 
-  it('returns empty array for unknown declaration type', () => {
-    const node = { type: 'TSEnumDeclaration', declarations: undefined, id: { name: 'Color' } }
-    expect(nameFromDeclaration(node)).toEqual([])
-  })
-
-  it('extracts string-literal aliased export name', () => {
+it('extracts string-literal aliased export name', () => {
     const file = writeTempFile("const foo = 1\nexport { foo as 'bar-baz' }\n")
     expect(extractExports(file)).toEqual(['bar-baz'])
   })

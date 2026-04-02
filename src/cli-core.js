@@ -18,7 +18,7 @@ Options:
   --version, -v             Show version`
 
 function parseArgs(argv) {
-  const parsed = {}
+  const parsed = { exclude: [] }
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i]
     if (arg === '--help' || arg === '-h')
@@ -33,10 +33,8 @@ function parseArgs(argv) {
       parsed.dependentsOf = argv[++i]
     else if (arg === '--dependencies-of')
       parsed.dependenciesOf = argv[++i]
-    else if (arg === '--exclude') {
-      if (!parsed.exclude) parsed.exclude = []
+    else if (arg === '--exclude')
       parsed.exclude.push(argv[++i])
-    }
     else if (arg === '--compact')
       parsed.compact = true
     else if (arg === '--pretty')

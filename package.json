@@ -6,7 +6,12 @@
     "xray": "./src/cli.js"
   },
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run",
+    "mutate": "node scripts/mutate.js",
+    "mutate:all": "node scripts/mutate.js --all",
+    "mutate:all:json": "node scripts/mutate.js --all --json",
+    "mutate:incremental": "node scripts/mutate.js --incremental --json",
+    "mutate:diff": "node scripts/mutate.js --diff"
   },
   "dependencies": {
     "acorn": "^8.16.0",
@@ -14,6 +19,8 @@
     "madge": "^8.0.0"
   },
   "devDependencies": {
+    "js-tokens": "^4.0.0",
+    "mutagen": "github:brandoncorrea/mutagen",
     "vitest": "^3.1.1"
   }
 }

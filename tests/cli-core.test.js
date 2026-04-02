@@ -160,6 +160,32 @@ describe('main', () => {
       expect(JSON.parse(cap.output())).toEqual({})
     })
 
+    it('defaults to pretty-printed JSON when stdout is a TTY', async () => {
+      const origIsTTY = process.stdout.isTTY
+      try {
+        process.stdout.isTTY = true
+        await main([root])
+        const lines = cap.output().trim().split('\n')
+        expect(lines.length).toBeGreaterThan(1)
+        expect(cap.output()).toContain('  ')
+        JSON.parse(cap.output())
+      } finally {
+        process.stdout.isTTY = origIsTTY
+      }
+    })
+
+    it('defaults to compact JSON when stdout is not a TTY', async () => {
+      const origIsTTY = process.stdout.isTTY
+      try {
+        process.stdout.isTTY = undefined
+        await main([root])
+        expect(cap.output().trim().split('\n')).toHaveLength(1)
+        JSON.parse(cap.output())
+      } finally {
+        process.stdout.isTTY = origIsTTY
+      }
+    })
+
     it('--compact outputs single-line JSON', async () => {
       await main([root, '--compact'])
       expect(cap.output().trim().split('\n')).toHaveLength(1)

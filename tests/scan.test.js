@@ -18,13 +18,13 @@ describe('scan', () => {
         'export function subtract(a, b) { return a - b; }'
       ].join('\n'),
       'src/calc.js': [
-        "import { add } from './math.js';",
-        'export function double(x) { return add(x, x); }'
+        "import { add } from './math.js'",
+        'export function double(x) { return add(x, x) }'
       ].join('\n'),
       'src/main.js': [
-        "import { double } from './calc.js';",
-        "import { subtract } from './math.js';",
-        'export function run() { return double(subtract(10, 3)); }'
+        "import { double } from './calc.js'",
+        "import { subtract } from './math.js'",
+        'export function run() { return double(subtract(10, 3)) }'
       ].join('\n'),
       'tests/math.test.js': '// test for math\n',
       'tests/calc.test.js': '// test for calc\n'
@@ -72,11 +72,11 @@ describe('scan', () => {
   it('normalizes paths that escape the scan root', async () => {
     root = setupFixture({
       'src/app.js': [
-        "import { env } from '../shared/env.js';",
-        'export function start() { return env; }'
+        "import { env } from '../shared/env.js'",
+        'export function start() { return env }'
       ].join('\n'),
       'shared/env.js': [
-        'export const env = "production";'
+        'export const env = "production"'
       ].join('\n')
     })
 
@@ -89,8 +89,8 @@ describe('scan', () => {
   it('scans .jsx files with correct exports and dependencies', async () => {
     root = setupFixture({
       'src/App.jsx': [
-        "import { Button } from './components/Button.jsx';",
-        'export function App() { return <Button />; }'
+        "import { Button } from './components/Button.jsx'",
+        'export function App() { return <Button /> }'
       ].join('\n'),
       'src/components/Button.jsx': [
         'export function Button() { return <button>Click</button>; }'
@@ -115,7 +115,7 @@ describe('scan', () => {
 
   it('handles file with no exports', async () => {
     root = setupFixture({
-      'src/side-effect.js': "console.log('init');\n"
+      'src/side-effect.js': "console.log('init')\n"
     })
 
     const result = await scan(root)

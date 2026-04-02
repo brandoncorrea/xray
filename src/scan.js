@@ -12,10 +12,6 @@ function getLineCount(path) {
     : content.split('\n').length
 }
 
-function toRelPath(path) {
-  return `src/${path}`
-}
-
 async function buildIndex(directory, srcDir, config) {
   const res = await madge(srcDir, { baseDir: directory })
   const graph = res.obj()

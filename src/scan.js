@@ -16,17 +16,13 @@ function toExcludeRegExp(exclusion) {
   return new RegExp(`(^|/)${exclusion}/`)
 }
 
-export function buildExcludeRegExp(patterns) {
-  return patterns.map(toExcludeRegExp)
-}
-
 function scanTarget(baseDir, include) {
   if (!include.length) return baseDir
   return include.map(d => join(baseDir, d))
 }
 
 async function buildIndex(baseDir, config) {
-  const excludeRegExp = buildExcludeRegExp(config.exclude)
+  const excludeRegExp = config.exclude.map(toExcludeRegExp)
   const fileExtensions = config.extensions.map(e => e.replace(/^\./, ''))
   const madgeOpts = { baseDir, fileExtensions, excludeRegExp }
   const target = scanTarget(baseDir, config.include)

@@ -9,7 +9,6 @@ function nameFromDeclaration({ type, declarations, id }) {
     return declarations.map(d => d.id.name)
   if (type === 'FunctionDeclaration' || type === 'ClassDeclaration')
     return [id.name]
-  return []
 }
 
 function isJsx(path) {

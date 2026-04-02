@@ -235,6 +235,63 @@ describe('main', () => {
     })
   })
 
+  it('help includes --include', async () => {
+    const cap = captureConsole()
+    try {
+      await main(['--help'])
+      expect(cap.output()).toContain('--include')
+    } finally {
+      cap.restore()
+    }
+  })
+
+  describe('--include', () => {
+    let root
+    let cap
+
+    beforeAll(() => {
+      root = setupFixture({
+        'src/app.js': 'export function main() { return 1 }\n',
+        'shared/utils.js': 'export function util() { return 2 }\n',
+        'vendor/lib.js': 'export function lib() { return 3 }\n'
+      })
+    })
+
+    afterAll(() => {
+      if (root) rmSync(root, { recursive: true, force: true })
+    })
+
+    beforeEach(() => { cap = captureStdout() })
+    afterEach(() => { cap.restore() })
+
+    it('--include scans only specified directories', async () => {
+      await main([root, '--include', 'src', '--compact'])
+      const index = JSON.parse(cap.output())
+      expect(Object.keys(index)).toEqual(['src/app.js'])
+    })
+
+    it('multiple --include flags scan multiple directories', async () => {
+      await main([root, '--include', 'src', '--include', 'shared', '--compact'])
+      const index = JSON.parse(cap.output())
+      expect(Object.keys(index).sort()).toEqual(['shared/utils.js', 'src/app.js'])
+    })
+
+    it('--include with --exclude narrows then removes', async () => {
+      const rootWithCoverage = setupFixture({
+        'src/app.js': 'export function main() {}\n',
+        'src/coverage/report.js': 'export function report() {}\n',
+        'shared/utils.js': 'export function util() {}\n'
+      })
+      try {
+        await main([rootWithCoverage, '--include', 'src', '--exclude', 'coverage', '--compact'])
+        const index = JSON.parse(cap.output())
+        expect(Object.keys(index)).toEqual(['src/app.js'])
+      } finally {
+        rmSync(rootWithCoverage, { recursive: true, force: true })
+      }
+    })
+  })
+
   describe('--exclude', () => {
     let root
     let cap

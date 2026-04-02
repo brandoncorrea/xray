@@ -20,12 +20,19 @@ export function buildExcludeRegExp(patterns) {
   return patterns.map(toExcludeRegExp)
 }
 
-async function buildIndex(baseDir, srcDir, config) {
+function scanTarget(baseDir, include) {
+  if (!include.length) return baseDir
+  const paths = include.map(d => join(baseDir, d))
+  return paths.length === 1 ? paths[0] : paths
+}
+
+async function buildIndex(baseDir, config) {
   const excludeRegExp = buildExcludeRegExp(config.exclude)
   const fileExtensions = config.extensions.map(e => e.replace(/^\./, ''))
   const madgeOpts = { baseDir, fileExtensions }
   if (excludeRegExp.length) madgeOpts.excludeRegExp = excludeRegExp
-  const res = await madge(srcDir, madgeOpts)
+  const target = scanTarget(baseDir, config.include)
+  const res = await madge(target, madgeOpts)
   const graph = res.obj()
   const index = {}
 
@@ -49,7 +56,9 @@ function distinctConcat(coll1, coll2) {
 
 export async function scan(directory, options = {}) {
   const config = await loadConfig(directory)
+  if (options.include?.length)
+    config.include = options.include
   if (options.exclude?.length)
     config.exclude = distinctConcat(config.exclude, options.exclude)
-  return buildIndex(directory, directory, config)
+  return buildIndex(directory, config)
 }

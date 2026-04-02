@@ -206,6 +206,62 @@ describe('scan', () => {
     expect(result['shared/env.js'].dependents).toEqual(['src/app.js'])
   })
 
+  it('scans only included directories when include is specified', async () => {
+    root = setupFixture({
+      'src/app.js': 'export function main() {}\n',
+      'shared/utils.js': 'export function util() {}\n',
+      'vendor/lib.js': 'export function lib() {}\n'
+    })
+
+    const result = await scan(root, { include: ['src', 'shared'] })
+    expect(Object.keys(result).sort()).toEqual(['shared/utils.js', 'src/app.js'])
+  })
+
+  it('scans everything when include is empty', async () => {
+    root = setupFixture({
+      'src/app.js': 'export function main() {}\n',
+      'lib/utils.js': 'export function util() {}\n'
+    })
+
+    const result = await scan(root, { include: [] })
+    expect(Object.keys(result).sort()).toEqual(['lib/utils.js', 'src/app.js'])
+  })
+
+  it('include narrows then exclude removes from that set', async () => {
+    root = setupFixture({
+      'src/app.js': 'export function main() {}\n',
+      'src/coverage/report.js': 'export function report() {}\n',
+      'shared/utils.js': 'export function util() {}\n'
+    })
+
+    const result = await scan(root, { include: ['src'], exclude: ['coverage'] })
+    expect(Object.keys(result)).toEqual(['src/app.js'])
+  })
+
+  it('CLI include overrides config include', async () => {
+    root = setupFixture({
+      'src/app.js': 'export function main() {}\n',
+      'shared/utils.js': 'export function util() {}\n',
+      'vendor/lib.js': 'export function lib() {}\n',
+      'xray.config.js': "export default { include: ['src', 'shared'] }\n"
+    })
+
+    const result = await scan(root, { include: ['vendor'] })
+    expect(Object.keys(result)).toEqual(['vendor/lib.js'])
+  })
+
+  it('uses config include when no CLI include specified', async () => {
+    root = setupFixture({
+      'src/app.js': 'export function main() {}\n',
+      'shared/utils.js': 'export function util() {}\n',
+      'vendor/lib.js': 'export function lib() {}\n',
+      'xray.config.js': "export default { include: ['src', 'shared'] }\n"
+    })
+
+    const result = await scan(root)
+    expect(Object.keys(result).sort()).toEqual(['shared/utils.js', 'src/app.js'])
+  })
+
   it('merges CLI exclude with config exclude', async () => {
     root = setupFixture({
       'src/app.js': 'export function main() {}\n',

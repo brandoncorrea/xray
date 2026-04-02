@@ -11,6 +11,7 @@ Options:
   --file <path>             Show detail for a single source file
   --dependents-of <path>    List files that import the given module
   --dependencies-of <path>  List modules imported by the given file
+  --include <dir>           Scan only this directory (repeatable)
   --exclude <dir>           Skip directory during scan (repeatable)
   --compact                 Force compact (single-line) JSON output
   --pretty                  Force pretty-printed JSON output
@@ -18,7 +19,7 @@ Options:
   --version, -v             Show version`
 
 function parseArgs(argv) {
-  const parsed = { exclude: [] }
+  const parsed = { exclude: [], include: [] }
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i]
     if (arg === '--help' || arg === '-h')
@@ -33,6 +34,8 @@ function parseArgs(argv) {
       parsed.dependentsOf = argv[++i]
     else if (arg === '--dependencies-of')
       parsed.dependenciesOf = argv[++i]
+    else if (arg === '--include')
+      parsed.include.push(argv[++i])
     else if (arg === '--exclude')
       parsed.exclude.push(argv[++i])
     else if (arg === '--compact')
@@ -90,7 +93,7 @@ function writeOutput(data, args) {
 
 async function doScan(args) {
   const { scan } = await import('./scan.js')
-  const options = { exclude: args.exclude }
+  const options = { exclude: args.exclude, include: args.include }
   const index = await scan(resolve(args.dir || '.'), options)
   writeOutput(selectQuery(args, index), args)
 }

@@ -46,6 +46,22 @@ export const extensions = ['.ts']
     }
   })
 
+  it('loads include from config', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'xray-cfg-'))
+    try {
+      writeFileSync(join(dir, 'xray.config.js'), `
+export default {
+  include: ['src', 'shared'],
+}
+`)
+      const config = await loadConfig(dir)
+      expect(config.include).toEqual(['src', 'shared'])
+      expect(config.extensions).toEqual(DEFAULTS.extensions)
+    } finally {
+      rmSync(dir, { recursive: true })
+    }
+  })
+
   it('config values replace defaults (not merge)', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'xray-cfg-'))
     try {

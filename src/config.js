@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url'
 export const DEFAULTS = {
   extensions: ['.js', '.jsx'],
   exclude: [],
+  include: [],
   testPatterns: ['tests/**/*.test.*', '**/*.test.*']
 }
 

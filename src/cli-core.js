@@ -90,8 +90,7 @@ function writeOutput(data, args) {
 
 async function doScan(args) {
   const { scan } = await import('./scan.js')
-  const options = {}
-  if (args.exclude) options.exclude = args.exclude
+  const options = { exclude: args.exclude }
   const index = await scan(resolve(args.dir || '.'), options)
   writeOutput(selectQuery(args, index), args)
 }

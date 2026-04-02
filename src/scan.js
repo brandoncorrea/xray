@@ -44,7 +44,7 @@ async function buildIndex(directory, srcDir, config) {
 
 export async function scan(directory, options = {}) {
   const config = await loadConfig(directory)
-  if (options.exclude && options.exclude.length)
+  if (options.exclude?.length)
     config.exclude = [...new Set([...config.exclude, ...options.exclude])]
   const srcDir = join(directory, 'src')
   if (existsSync(srcDir))

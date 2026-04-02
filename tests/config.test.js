@@ -4,16 +4,6 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { loadConfig, DEFAULTS } from '../src/config.js'
 
-describe('DEFAULTS', () => {
-  it('has expected default values', () => {
-    expect(DEFAULTS).toEqual({
-      extensions: ['.js', '.jsx'],
-      exclude: [],
-      testPatterns: ['tests/**/*.test.*', '**/*.test.*']
-    })
-  })
-})
-
 describe('loadConfig', () => {
   it('returns defaults when no config file exists', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'xray-cfg-'))

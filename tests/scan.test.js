@@ -273,6 +273,19 @@ describe('scan', () => {
     expect(Object.keys(result)).toEqual(['src/app.js'])
   })
 
+  it('exclude pattern uses regex boundary — does not match partial directory names', async () => {
+    root = setupFixture({
+      'src/scripts/build.js': 'export function build() {}\n',
+      'src/my-scripts/helper.js': 'export function helper() {}\n',
+      'src/app.js': 'export function main() {}\n'
+    })
+
+    const result = await scan(root, { exclude: ['scripts'] })
+    expect(Object.keys(result)).not.toContain('src/scripts/build.js')
+    expect(Object.keys(result)).toContain('src/my-scripts/helper.js')
+    expect(Object.keys(result)).toContain('src/app.js')
+  })
+
   it('merges CLI exclude with config exclude', async () => {
     root = setupFixture({
       'src/app.js': 'export function main() {}\n',

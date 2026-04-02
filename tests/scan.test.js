@@ -1,20 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { rmSync } from 'node:fs'
-import { scan, buildExcludeRegExp } from '../src/scan.js'
+import { scan } from '../src/scan.js'
 import { setupFixture } from './helpers/fixtures.js'
-
-describe('buildExcludeRegExp', () => {
-  it('returns empty array when patterns is empty', () => {
-    expect(buildExcludeRegExp([])).toEqual([])
-  })
-
-  it('returns array of RegExp for non-empty patterns', () => {
-    const result = buildExcludeRegExp(['node_modules', 'dist'])
-    expect(result).toHaveLength(2)
-    expect(result[0]).toBeInstanceOf(RegExp)
-    expect(result[1]).toBeInstanceOf(RegExp)
-  })
-})
 
 describe('scan', () => {
   let root
@@ -169,6 +156,19 @@ describe('scan', () => {
     expect(Object.keys(result)).not.toContain('src/coverage/report.js')
     expect(Object.keys(result)).not.toContain('src/scripts/build.js')
     expect(Object.keys(result)).toContain('src/app.js')
+  })
+
+  it('includes all files when exclude is empty array', async () => {
+    root = setupFixture({
+      'src/app.js': 'export function main() {}\n',
+      'src/vendor/lib.js': 'export function lib() {}\n'
+    })
+
+    const result = await scan(root, { exclude: [] })
+    expect(Object.keys(result).sort()).toEqual([
+      'src/app.js',
+      'src/vendor/lib.js'
+    ])
   })
 
   it('merges CLI exclude with config exclude', async () => {

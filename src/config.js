@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 export const DEFAULTS = {
-  extensions: ['.js'],
+  extensions: ['.js', '.jsx'],
   exclude: [],
   testPatterns: ['tests/**/*.test.*', '**/*.test.*']
 }

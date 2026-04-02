@@ -20,7 +20,8 @@ function buildExcludeRegExp(patterns) {
 
 async function buildIndex(directory, srcDir, config) {
   const excludeRegExp = buildExcludeRegExp(config.exclude || [])
-  const madgeOpts = { baseDir: directory }
+  const fileExtensions = config.extensions.map(e => e.replace(/^\./, ''))
+  const madgeOpts = { baseDir: directory, fileExtensions }
   if (excludeRegExp) madgeOpts.excludeRegExp = excludeRegExp
   const res = await madge(srcDir, madgeOpts)
   const graph = res.obj()

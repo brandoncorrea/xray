@@ -7,7 +7,7 @@ import { loadConfig, DEFAULTS } from '../src/config.js'
 describe('DEFAULTS', () => {
   it('has expected default values', () => {
     expect(DEFAULTS).toEqual({
-      extensions: ['.js'],
+      extensions: ['.js', '.jsx'],
       exclude: [],
       testPatterns: ['tests/**/*.test.*', '**/*.test.*']
     })

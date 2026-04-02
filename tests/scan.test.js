@@ -97,6 +97,33 @@ describe('scan', () => {
     expect(result['src/app.js'].dependencies).toEqual(['shared/env.js'])
   })
 
+  it('scans .jsx files with correct exports and dependencies', async () => {
+    root = setupFixture({
+      'src/App.jsx': [
+        "import { Button } from './components/Button.jsx';",
+        'export function App() { return <Button />; }'
+      ].join('\n'),
+      'src/components/Button.jsx': [
+        'export function Button() { return <button>Click</button>; }'
+      ].join('\n'),
+      'tests/components/Button.test.jsx': '// test\n'
+    })
+
+    const result = await scan(root)
+
+    expect(Object.keys(result).sort()).toEqual([
+      'src/App.jsx',
+      'src/components/Button.jsx'
+    ])
+
+    expect(result['src/App.jsx'].exports).toEqual(['App'])
+    expect(result['src/App.jsx'].dependencies).toEqual(['src/components/Button.jsx'])
+
+    expect(result['src/components/Button.jsx'].exports).toEqual(['Button'])
+    expect(result['src/components/Button.jsx'].dependents).toEqual(['src/App.jsx'])
+    expect(result['src/components/Button.jsx'].tests).toEqual(['tests/components/Button.test.jsx'])
+  })
+
   it('handles file with no exports', async () => {
     root = setupFixture({
       'src/side-effect.js': "console.log('init');\n"

@@ -35,7 +35,7 @@ export function extractExports(filePath) {
       if (node.declaration)
         exports.push(...nameFromDeclaration(node.declaration))
       for (const spec of node.specifiers) {
-        const name = spec.exported.name ?? spec.exported.value
+        const name = spec.exported.name || spec.exported.value
         exports.push(name)
       }
     }

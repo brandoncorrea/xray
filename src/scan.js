@@ -22,15 +22,13 @@ export function buildExcludeRegExp(patterns) {
 
 function scanTarget(baseDir, include) {
   if (!include.length) return baseDir
-  const paths = include.map(d => join(baseDir, d))
-  return paths.length === 1 ? paths[0] : paths
+  return include.map(d => join(baseDir, d))
 }
 
 async function buildIndex(baseDir, config) {
   const excludeRegExp = buildExcludeRegExp(config.exclude)
   const fileExtensions = config.extensions.map(e => e.replace(/^\./, ''))
-  const madgeOpts = { baseDir, fileExtensions }
-  if (excludeRegExp.length) madgeOpts.excludeRegExp = excludeRegExp
+  const madgeOpts = { baseDir, fileExtensions, excludeRegExp }
   const target = scanTarget(baseDir, config.include)
   const res = await madge(target, madgeOpts)
   const graph = res.obj()

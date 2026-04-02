@@ -21,7 +21,7 @@ const sources = [
   'src/config.js',
   'src/exports.js',
   'src/scan.js',
-  'src/testFiles.js',
+  'src/testFiles.js'
 ]
 
 const testSources = [
@@ -29,7 +29,7 @@ const testSources = [
   'tests/config.test.js',
   'tests/exports.test.js',
   'tests/scan.test.js',
-  'tests/testFiles.test.js',
+  'tests/testFiles.test.js'
 ]
 
 const runner = createManualRunner({
@@ -38,8 +38,8 @@ const runner = createManualRunner({
   testSources,
   createRunner: (sourceFile) => createVitestRunner(sourceFile, {
     config: 'vitest.config.js',
-    warm: false,
-  }),
+    warm: false
+  })
 })
 
 runner.main()

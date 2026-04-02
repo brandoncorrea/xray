@@ -3,7 +3,7 @@ import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
-import { rmSync } from 'node:fs'
+import { rmSync, readFileSync } from 'node:fs'
 import { setupFixture } from './helpers/fixtures.js'
 
 const exec = promisify(execFile)
@@ -29,6 +29,22 @@ describe('cli binary (end-to-end)', () => {
       const { stdout } = await run(root)
       const index = JSON.parse(stdout)
       expect(index['src/math.js']).toBeDefined()
+    } finally {
+      if (root) rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  it('defaults to pretty-printed JSON when writing to file', async () => {
+    let root
+    try {
+      root = setupFixture({
+        'src/math.js': 'export function add(a, b) { return a + b }\n'
+      })
+      const outFile = join(root, 'out.json')
+      await run(root, '-o', outFile)
+      const content = readFileSync(outFile, 'utf8')
+      expect(content).toContain('\n')
+      expect(content.split('\n').length).toBeGreaterThan(2)
     } finally {
       if (root) rmSync(root, { recursive: true, force: true })
     }

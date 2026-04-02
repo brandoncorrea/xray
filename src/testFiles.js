@@ -39,17 +39,6 @@ function findTestsFromSources(sourceFile, projectRoot, nameWithoutExt) {
   return [...new Set(found)].sort()
 }
 
-/**
- * Find test files associated with a source file by convention.
- *
- * Conventions checked:
- * - Mirror structure: src/foo/bar.js → tests/foo/bar.test.js
- * - Co-located: src/foo/bar.js → src/foo/bar.test.js
- *
- * @param {string} sourceFile - Relative path to source file from project root
- * @param {string} projectRoot - Absolute path to project root
- * @returns {string[]} Sorted array of matching test file paths (relative)
- */
 export function findTestFiles(sourceFile, projectRoot) {
   const ext = extname(sourceFile)
   const nameWithoutExt = basename(sourceFile, ext)

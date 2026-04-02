@@ -113,6 +113,15 @@ describe('scan', () => {
     expect(result['src/components/Button.jsx'].tests).toEqual(['tests/components/Button.test.jsx'])
   })
 
+  it('reports zero lines for empty file', async () => {
+    root = setupFixture({
+      'src/empty.js': ''
+    })
+
+    const result = await scan(root)
+    expect(result['src/empty.js'].lines).toBe(0)
+  })
+
   it('handles file with no exports', async () => {
     root = setupFixture({
       'src/side-effect.js': "console.log('init')\n"

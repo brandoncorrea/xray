@@ -4,11 +4,6 @@ import { join, dirname, basename, extname } from 'node:path'
 const TEST_SUFFIXES = ['.spec', '.test']
 const TEST_EXTENSIONS = ['.js', '.jsx']
 
-function testMatchingSelf(nameWithoutExt) {
-  return TEST_SUFFIXES.find(
-    suffix => nameWithoutExt.endsWith(suffix))
-}
-
 function mirrorDirectory(dir) {
   // Strip leading src/ to get the relative path within src
   const relPath = dir === 'src' ? ''
@@ -42,7 +37,5 @@ function findTestsFromSources(sourceFile, projectRoot, nameWithoutExt) {
 export function findTestFiles(sourceFile, projectRoot) {
   const ext = extname(sourceFile)
   const nameWithoutExt = basename(sourceFile, ext)
-  if (testMatchingSelf(nameWithoutExt))
-    return []
   return findTestsFromSources(sourceFile, projectRoot, nameWithoutExt)
 }

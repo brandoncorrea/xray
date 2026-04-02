@@ -8,7 +8,7 @@ export default defineConfig({
       include: ['src/**/*.js'],
       exclude: ['src/cli.js'],
       reporter: ['text', 'lcov', 'json-summary'],
-      reportsDirectory: './coverage',
-    },
-  },
+      reportsDirectory: './reports/coverage'
+    }
+  }
 })

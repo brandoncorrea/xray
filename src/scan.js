@@ -12,9 +12,9 @@ function getLineCount(path) {
   return content.endsWith('\n') ? lines.length - 1 : lines.length
 }
 
-function buildExcludeRegExp(patterns) {
-  if (patterns.length)
-    return patterns.map(p => new RegExp(`(^|/)${p}/`))
+export function buildExcludeRegExp(patterns) {
+  if (!patterns.length) return []
+  return patterns.map(p => new RegExp(`(^|/)${p}/`))
 }
 
 
@@ -22,7 +22,7 @@ async function buildIndex(directory, srcDir, config) {
   const excludeRegExp = buildExcludeRegExp(config.exclude || [])
   const fileExtensions = config.extensions.map(e => e.replace(/^\./, ''))
   const madgeOpts = { baseDir: directory, fileExtensions }
-  if (excludeRegExp) madgeOpts.excludeRegExp = excludeRegExp
+  if (excludeRegExp.length) madgeOpts.excludeRegExp = excludeRegExp
   const res = await madge(srcDir, madgeOpts)
   const graph = res.obj()
   const index = {}

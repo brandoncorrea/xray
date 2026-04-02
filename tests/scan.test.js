@@ -1,7 +1,20 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { rmSync } from 'node:fs'
-import { scan } from '../src/scan.js'
+import { scan, buildExcludeRegExp } from '../src/scan.js'
 import { setupFixture } from './helpers/fixtures.js'
+
+describe('buildExcludeRegExp', () => {
+  it('returns empty array when patterns is empty', () => {
+    expect(buildExcludeRegExp([])).toEqual([])
+  })
+
+  it('returns array of RegExp for non-empty patterns', () => {
+    const result = buildExcludeRegExp(['node_modules', 'dist'])
+    expect(result).toHaveLength(2)
+    expect(result[0]).toBeInstanceOf(RegExp)
+    expect(result[1]).toBeInstanceOf(RegExp)
+  })
+})
 
 describe('scan', () => {
   let root

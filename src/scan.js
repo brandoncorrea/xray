@@ -12,16 +12,18 @@ function getLineCount(path) {
   return content.endsWith('\n') ? lines.length - 1 : lines.length
 }
 
-export function buildExcludeRegExp(patterns) {
-  if (!patterns.length) return []
-  return patterns.map(p => new RegExp(`(^|/)${p}/`))
+function toExcludeRegExp(exclusion) {
+  return new RegExp(`(^|/)${exclusion}/`)
 }
 
+export function buildExcludeRegExp(patterns) {
+  return patterns.map(toExcludeRegExp)
+}
 
-async function buildIndex(directory, srcDir, config) {
-  const excludeRegExp = buildExcludeRegExp(config.exclude || [])
+async function buildIndex(baseDir, srcDir, config) {
+  const excludeRegExp = buildExcludeRegExp(config.exclude)
   const fileExtensions = config.extensions.map(e => e.replace(/^\./, ''))
-  const madgeOpts = { baseDir: directory, fileExtensions }
+  const madgeOpts = { baseDir, fileExtensions }
   if (excludeRegExp.length) madgeOpts.excludeRegExp = excludeRegExp
   const res = await madge(srcDir, madgeOpts)
   const graph = res.obj()
@@ -29,12 +31,12 @@ async function buildIndex(directory, srcDir, config) {
 
   for (const file of Object.keys(graph)) {
     if (!file.startsWith('src/')) continue
-    const absPath = join(directory, file)
+    const absPath = join(baseDir, file)
     index[file] = {
       exports: extractExports(absPath),
       dependencies: graph[file],
       dependents: res.depends(file),
-      tests: findTestFiles(file, directory),
+      tests: findTestFiles(file, baseDir),
       lines: getLineCount(absPath)
     }
   }
@@ -42,10 +44,14 @@ async function buildIndex(directory, srcDir, config) {
   return index
 }
 
+function distinctConcat(coll1, coll2) {
+  return [...new Set([...coll1, ...coll2])]
+}
+
 export async function scan(directory, options = {}) {
   const config = await loadConfig(directory)
   if (options.exclude?.length)
-    config.exclude = [...new Set([...config.exclude, ...options.exclude])]
+    config.exclude = distinctConcat(config.exclude, options.exclude)
   const srcDir = join(directory, 'src')
   if (existsSync(srcDir))
     return buildIndex(directory, srcDir, config)

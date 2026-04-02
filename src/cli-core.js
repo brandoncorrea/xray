@@ -95,20 +95,18 @@ async function doScan(args) {
   writeOutput(selectQuery(args, index), args)
 }
 
+async function getVersion() {
+  const { VERSION } = await import('./index.js')
+  return VERSION
+}
+
 export async function main(argv) {
   const args = parseArgs(argv)
-
-  if (args.help) {
+  if (args.help)
     console.log(HELP)
-    return 0
-  }
-
-  if (args.version) {
-    const { VERSION } = await import('./index.js')
-    console.log(VERSION)
-    return 0
-  }
-
-  await doScan(args)
+  else if (args.version)
+    console.log(await getVersion())
+  else
+    await doScan(args)
   return 0
 }

@@ -2,6 +2,13 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   test: {
-    globals: false
-  }
+    globals: false,
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.js'],
+      exclude: ['src/cli.js'],
+      reporter: ['text', 'lcov', 'json-summary'],
+      reportsDirectory: './coverage',
+    },
+  },
 })

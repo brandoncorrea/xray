@@ -11,7 +11,9 @@
     "mutate:all": "node scripts/mutate.js --all",
     "mutate:all:json": "node scripts/mutate.js --all --json",
     "mutate:incremental": "node scripts/mutate.js --incremental --json",
-    "mutate:diff": "node scripts/mutate.js --diff"
+    "mutate:diff": "node scripts/mutate.js --diff",
+    "coverage": "vitest run --coverage",
+    "coverage:open": "vitest run --coverage && open coverage/index.html"
   },
   "dependencies": {
     "acorn": "^8.16.0",
@@ -19,6 +21,7 @@
     "madge": "^8.0.0"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^3.2.4",
     "js-tokens": "^4.0.0",
     "mutagen": "github:brandoncorrea/mutagen",
     "vitest": "^3.1.1"

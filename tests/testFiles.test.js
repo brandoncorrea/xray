@@ -101,6 +101,15 @@ describe('findTestFiles', () => {
     expect(result).toEqual(['tests/index.test.js'])
   })
 
+  it('mirrors non-src directory path as-is under tests/', () => {
+    root = setupTempProject([
+      'lib/utils.js',
+      'tests/lib/utils.test.js'
+    ])
+    const result = findTestFiles('lib/utils.js', root)
+    expect(result).toEqual(['tests/lib/utils.test.js'])
+  })
+
   it('does not return the source file itself', () => {
     root = setupTempProject([
       'src/handlers/feed.test.js'

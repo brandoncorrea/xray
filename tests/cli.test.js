@@ -3,8 +3,8 @@ import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import { rmSync, readFileSync } from 'node:fs'
+import { setupFixture } from './helpers/fixtures.js'
 
 const exec = promisify(execFile)
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -12,16 +12,6 @@ const cli = join(__dirname, '..', 'src', 'cli.js')
 
 function run(...args) {
   return exec('node', [cli, ...args])
-}
-
-function setupFixture(files) {
-  const root = mkdtempSync(join(tmpdir(), 'xray-cli-'))
-  for (const [filePath, content] of Object.entries(files)) {
-    const full = join(root, filePath)
-    mkdirSync(join(full, '..'), { recursive: true })
-    writeFileSync(full, content)
-  }
-  return root
 }
 
 describe('cli', () => {

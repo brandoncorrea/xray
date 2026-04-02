@@ -1,18 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest'
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { rmSync } from 'node:fs'
 import { scan } from '../src/scan.js'
-
-function setupFixture(files) {
-  const root = mkdtempSync(join(tmpdir(), 'xray-scan-'))
-  for (const [filePath, content] of Object.entries(files)) {
-    const full = join(root, filePath)
-    mkdirSync(join(full, '..'), { recursive: true })
-    writeFileSync(full, content)
-  }
-  return root
-}
+import { setupFixture } from './helpers/fixtures.js'
 
 describe('scan', () => {
   let root

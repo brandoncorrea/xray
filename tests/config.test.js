@@ -33,6 +33,19 @@ export default {
     }
   })
 
+  it('returns defaults when config file exists but lacks default export', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'xray-cfg-'))
+    try {
+      writeFileSync(join(dir, 'xray.config.js'), `
+export const extensions = ['.ts']
+`)
+      const config = await loadConfig(dir)
+      expect(config).toEqual(DEFAULTS)
+    } finally {
+      rmSync(dir, { recursive: true })
+    }
+  })
+
   it('config values replace defaults (not merge)', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'xray-cfg-'))
     try {

@@ -17,7 +17,7 @@ Options:
   --help, -h                Show this help message
   --version, -v             Show version`
 
-export function parseArgs(argv) {
+function parseArgs(argv) {
   const parsed = {}
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i]

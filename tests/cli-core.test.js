@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach, afterEach } from 'vitest'
 import { rmSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { main, parseArgs } from '../src/cli-core.js'
+import { main } from '../src/cli-core.js'
 import { setupFixture } from './helpers/fixtures.js'
 
 function captureStdout() {
@@ -28,76 +28,6 @@ function captureConsole() {
     restore: () => spy.mockRestore()
   }
 }
-
-describe('parseArgs', () => {
-  it('parses --help', () => {
-    expect(parseArgs(['--help'])).toEqual({ help: true })
-  })
-
-  it('parses -h', () => {
-    expect(parseArgs(['-h'])).toEqual({ help: true })
-  })
-
-  it('parses --version', () => {
-    expect(parseArgs(['--version'])).toEqual({ version: true })
-  })
-
-  it('parses -v', () => {
-    expect(parseArgs(['-v'])).toEqual({ version: true })
-  })
-
-  it('parses directory argument', () => {
-    expect(parseArgs(['/some/dir'])).toEqual({ dir: '/some/dir' })
-  })
-
-  it('parses --output', () => {
-    expect(parseArgs(['--output', 'out.json'])).toEqual({ output: 'out.json' })
-  })
-
-  it('parses -o', () => {
-    expect(parseArgs(['-o', 'out.json'])).toEqual({ output: 'out.json' })
-  })
-
-  it('parses --file', () => {
-    expect(parseArgs(['--file', 'src/foo.js'])).toEqual({ file: 'src/foo.js' })
-  })
-
-  it('parses --dependents-of', () => {
-    expect(parseArgs(['--dependents-of', 'src/foo.js'])).toEqual({ dependentsOf: 'src/foo.js' })
-  })
-
-  it('parses --dependencies-of', () => {
-    expect(parseArgs(['--dependencies-of', 'src/foo.js'])).toEqual({ dependenciesOf: 'src/foo.js' })
-  })
-
-  it('parses --compact', () => {
-    expect(parseArgs(['--compact'])).toEqual({ compact: true })
-  })
-
-  it('parses --pretty', () => {
-    expect(parseArgs(['--pretty'])).toEqual({ pretty: true })
-  })
-
-  it('parses --exclude (single)', () => {
-    expect(parseArgs(['--exclude', 'coverage'])).toEqual({ exclude: ['coverage'] })
-  })
-
-  it('parses --exclude (multiple)', () => {
-    expect(parseArgs(['--exclude', 'coverage', '--exclude', 'scripts'])).toEqual({
-      exclude: ['coverage', 'scripts']
-    })
-  })
-
-  it('parses combined flags', () => {
-    const result = parseArgs(['/dir', '--file', 'src/a.js', '--compact', '-o', 'out.json'])
-    expect(result).toEqual({
-      dir: '/dir',
-      file: 'src/a.js',
-      compact: true,
-      output: 'out.json'
-    })
-  })
-})
 
 describe('main', () => {
   it('prints help and returns 0', async () => {

@@ -59,4 +59,18 @@ describe('cli binary (end-to-end)', () => {
     const { stdout } = await run('--version')
     expect(stdout.trim()).toMatch(/^\d+\.\d+\.\d+$/)
   })
+
+  it('ignores unknown flags and still scans the correct directory', async () => {
+    let root
+    try {
+      root = setupFixture({
+        'src/hello.js': 'export function hello() { return "hi" }\n'
+      })
+      const { stdout } = await run(root, '--bogus')
+      const index = JSON.parse(stdout)
+      expect(index['src/hello.js']).toBeDefined()
+    } finally {
+      if (root) rmSync(root, { recursive: true, force: true })
+    }
+  })
 })

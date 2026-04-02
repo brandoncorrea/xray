@@ -4,29 +4,27 @@ import acornJsx from 'acorn-jsx'
 
 const jsxParser = Parser.extend(acornJsx())
 
-function nameFromDeclaration(declaration) {
-  if (!declaration) return []
-  switch (declaration.type) {
-    case 'VariableDeclaration':
-      return declaration.declarations.map(d => d.id.name)
-    case 'FunctionDeclaration':
-    case 'ClassDeclaration':
-      return declaration.id ? [declaration.id.name] : []
-    default:
-      return []
-  }
+function nameFromDeclaration({ type, declarations, id }) {
+  if (type === 'VariableDeclaration')
+    return declarations.map(d => d.id.name)
+  if (type === 'FunctionDeclaration' || type === 'ClassDeclaration')
+    return id ? [id.name] : []
+  return []
+}
+
+function isJsx(path) {
+  return path.endsWith('.jsx') || path.endsWith('.tsx')
 }
 
 export function extractExports(filePath) {
   const source = readFileSync(filePath, 'utf-8')
-  const isJsx = filePath.endsWith('.jsx') || filePath.endsWith('.tsx')
-  const parser = isJsx ? jsxParser : Parser
+  const parser = isJsx(filePath) ? jsxParser : Parser
 
   let ast
   try {
     ast = parser.parse(source, {
       sourceType: 'module',
-      ecmaVersion: 'latest',
+      ecmaVersion: 'latest'
     })
   } catch {
     return []
@@ -35,9 +33,8 @@ export function extractExports(filePath) {
   const exports = []
   for (const node of ast.body) {
     if (node.type === 'ExportNamedDeclaration') {
-      if (node.declaration) {
+      if (node.declaration)
         exports.push(...nameFromDeclaration(node.declaration))
-      }
       for (const spec of node.specifiers) {
         const name = spec.exported.name ?? spec.exported.value
         exports.push(name)

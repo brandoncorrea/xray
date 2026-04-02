@@ -13,8 +13,8 @@ function getLineCount(path) {
 }
 
 function buildExcludeRegExp(patterns) {
-  if (!patterns.length) return undefined
-  return patterns.map(p => new RegExp(`(^|/)${p}/`))
+  if (patterns.length)
+    return patterns.map(p => new RegExp(`(^|/)${p}/`))
 }
 
 

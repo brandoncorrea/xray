@@ -64,9 +64,12 @@ function filterDependencies(dependenciesOf, index) {
 }
 
 function selectQuery(args, index) {
-  if (args.file) return filterFile(args.file, index)
-  if (args.dependentsOf) return filterDependents(args.dependentsOf, index)
-  if (args.dependenciesOf) return filterDependencies(args.dependenciesOf, index)
+  if (args.file)
+    return filterFile(args.file, index)
+  if (args.dependentsOf)
+    return filterDependents(args.dependentsOf, index)
+  if (args.dependenciesOf)
+    return filterDependencies(args.dependenciesOf, index)
   return index
 }
 

@@ -17,19 +17,20 @@ import { createManualRunner, createVitestRunner } from 'mutagen'
 import { javascript } from 'mutagen/patterns'
 
 const sources = [
-  'src/cli.js',
+  'src/cli-core.js',
   'src/config.js',
   'src/exports.js',
   'src/scan.js',
-  'src/testFiles.js'
+  'src/testFiles.js',
 ]
 
 const testSources = [
+  'tests/cli-core.test.js',
   'tests/cli.test.js',
   'tests/config.test.js',
   'tests/exports.test.js',
   'tests/scan.test.js',
-  'tests/testFiles.test.js'
+  'tests/testFiles.test.js',
 ]
 
 const runner = createManualRunner({

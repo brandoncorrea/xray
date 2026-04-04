@@ -1,19 +1,15 @@
-import { describe, it, expect, vi, beforeAll, afterAll, beforeEach, afterEach } from 'vitest'
-import { rmSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
+import { rmSync } from 'node:fs'
 import { main } from '../src/cli-core.js'
 import { setupFixture } from './helpers/fixtures.js'
 
-function captureStdout() {
+function captureOutput() {
   const chunks = []
-  const spy = vi.spyOn(process.stdout, 'write').mockImplementation(chunk => {
-    chunks.push(chunk)
-    return true
-  })
+  let writtenPath
   return {
-    spy,
+    write(json, outputPath) { chunks.push(json); writtenPath = outputPath },
     output: () => chunks.join(''),
-    restore: () => spy.mockRestore()
+    path: () => writtenPath,
   }
 }
 
@@ -66,16 +62,15 @@ describe('main', () => {
     const root = setupFixture({
       'src/hello.js': 'export function hello() {}\n'
     })
-    const cap = captureStdout()
+    const cap = captureOutput()
     const origCwd = process.cwd()
     try {
       process.chdir(root)
-      await main(['--compact'])
+      await main(['--compact'], { write: cap.write })
       const index = JSON.parse(cap.output())
       expect(Object.keys(index)).toEqual(['src/hello.js'])
     } finally {
       process.chdir(origCwd)
-      cap.restore()
       rmSync(root, { recursive: true, force: true })
     }
   })
@@ -106,12 +101,9 @@ describe('main', () => {
       if (root) rmSync(root, { recursive: true, force: true })
     })
 
-    let cap
-    beforeEach(() => { cap = captureStdout() })
-    afterEach(() => { cap.restore() })
-
-    it('full scan outputs JSON to stdout', async () => {
-      await main([root, '--compact'])
+    it('full scan outputs JSON', async () => {
+      const cap = captureOutput()
+      await main([root, '--compact'], { write: cap.write })
       const index = JSON.parse(cap.output())
       expect(Object.keys(index).sort()).toEqual([
         'src/calc.js', 'src/main.js', 'src/math.js', 'tests/math.test.js'
@@ -119,25 +111,25 @@ describe('main', () => {
       expect(index['src/math.js'].exports).toEqual(['add', 'subtract'])
     })
 
-    it('--output writes JSON to file', async () => {
-      const outFile = join(root, 'out.json')
-      await main([root, '--output', outFile])
-      expect(cap.output()).toBe('')
-      const content = readFileSync(outFile, 'utf-8')
-      const index = JSON.parse(content)
+    it('--output passes output path to writer', async () => {
+      const cap = captureOutput()
+      await main([root, '--output', 'out.json'], { write: cap.write })
+      expect(cap.path()).toBe('out.json')
+      const index = JSON.parse(cap.output())
       expect(index['src/math.js'].exports).toEqual(['add', 'subtract'])
     })
 
-    it('-o writes JSON to file', async () => {
-      const outFile = join(root, 'out2.json')
-      await main([root, '-o', outFile])
-      const content = readFileSync(outFile, 'utf-8')
-      const index = JSON.parse(content)
+    it('-o passes output path to writer', async () => {
+      const cap = captureOutput()
+      await main([root, '-o', 'out.json'], { write: cap.write })
+      expect(cap.path()).toBe('out.json')
+      const index = JSON.parse(cap.output())
       expect(Object.keys(index)).toContain('src/calc.js')
     })
 
     it('--file shows detail for a single file', async () => {
-      await main([root, '--file', 'src/math.js', '--compact'])
+      const cap = captureOutput()
+      await main([root, '--file', 'src/math.js', '--compact'], { write: cap.write })
       const result = JSON.parse(cap.output())
       expect(Object.keys(result)).toEqual(['src/math.js'])
       expect(result['src/math.js'].exports).toEqual(['add', 'subtract'])
@@ -145,44 +137,51 @@ describe('main', () => {
     })
 
     it('--file for unknown file outputs empty object', async () => {
-      await main([root, '--file', 'src/nope.js', '--compact'])
+      const cap = captureOutput()
+      await main([root, '--file', 'src/nope.js', '--compact'], { write: cap.write })
       expect(JSON.parse(cap.output())).toEqual({})
     })
 
     it('--dependents-of lists files that import the target', async () => {
-      await main([root, '--dependents-of', 'src/math.js', '--compact'])
+      const cap = captureOutput()
+      await main([root, '--dependents-of', 'src/math.js', '--compact'], { write: cap.write })
       const result = JSON.parse(cap.output())
       expect(Object.keys(result).sort()).toEqual(['src/calc.js', 'src/main.js'])
     })
 
     it('--dependents-of for leaf file outputs empty object', async () => {
-      await main([root, '--dependents-of', 'src/main.js', '--compact'])
+      const cap = captureOutput()
+      await main([root, '--dependents-of', 'src/main.js', '--compact'], { write: cap.write })
       expect(JSON.parse(cap.output())).toEqual({})
     })
 
     it('--dependencies-of lists modules imported by the target', async () => {
-      await main([root, '--dependencies-of', 'src/main.js', '--compact'])
+      const cap = captureOutput()
+      await main([root, '--dependencies-of', 'src/main.js', '--compact'], { write: cap.write })
       const result = JSON.parse(cap.output())
       expect(Object.keys(result)).toEqual(['src/main.js'])
       expect(result['src/main.js'].sort()).toEqual(['src/calc.js', 'src/math.js'])
     })
 
     it('--dependencies-of for file with no deps outputs empty array', async () => {
-      await main([root, '--dependencies-of', 'src/math.js', '--compact'])
+      const cap = captureOutput()
+      await main([root, '--dependencies-of', 'src/math.js', '--compact'], { write: cap.write })
       const result = JSON.parse(cap.output())
       expect(result['src/math.js']).toEqual([])
     })
 
     it('--dependencies-of for unknown file outputs empty object', async () => {
-      await main([root, '--dependencies-of', 'src/nope.js', '--compact'])
+      const cap = captureOutput()
+      await main([root, '--dependencies-of', 'src/nope.js', '--compact'], { write: cap.write })
       expect(JSON.parse(cap.output())).toEqual({})
     })
 
     it('defaults to pretty-printed JSON when stdout is a TTY', async () => {
+      const cap = captureOutput()
       const origIsTTY = process.stdout.isTTY
       try {
         process.stdout.isTTY = true
-        await main([root])
+        await main([root], { write: cap.write })
         const lines = cap.output().trim().split('\n')
         expect(lines.length).toBeGreaterThan(1)
         expect(cap.output()).toContain('  ')
@@ -193,10 +192,11 @@ describe('main', () => {
     })
 
     it('defaults to compact JSON when stdout is not a TTY', async () => {
+      const cap = captureOutput()
       const origIsTTY = process.stdout.isTTY
       try {
         process.stdout.isTTY = undefined
-        await main([root])
+        await main([root], { write: cap.write })
         expect(cap.output().trim().split('\n')).toHaveLength(1)
         JSON.parse(cap.output())
       } finally {
@@ -205,33 +205,33 @@ describe('main', () => {
     })
 
     it('--compact outputs single-line JSON', async () => {
-      await main([root, '--compact'])
+      const cap = captureOutput()
+      await main([root, '--compact'], { write: cap.write })
       expect(cap.output().trim().split('\n')).toHaveLength(1)
       JSON.parse(cap.output())
     })
 
     it('--pretty outputs indented JSON', async () => {
-      await main([root, '--pretty'])
+      const cap = captureOutput()
+      await main([root, '--pretty'], { write: cap.write })
       const lines = cap.output().trim().split('\n')
       expect(lines.length).toBeGreaterThan(1)
       expect(cap.output()).toContain('  ')
       JSON.parse(cap.output())
     })
 
-    it('--compact with -o writes compact JSON to file', async () => {
-      const outFile = join(root, 'compact.json')
-      await main([root, '-o', outFile, '--compact'])
-      const content = readFileSync(outFile, 'utf-8')
-      expect(content.trim().split('\n')).toHaveLength(1)
-      JSON.parse(content)
+    it('--compact with -o writes compact JSON', async () => {
+      const cap = captureOutput()
+      await main([root, '-o', 'out.json', '--compact'], { write: cap.write })
+      expect(cap.output().trim().split('\n')).toHaveLength(1)
+      JSON.parse(cap.output())
     })
 
-    it('--pretty with -o writes pretty JSON to file', async () => {
-      const outFile = join(root, 'pretty.json')
-      await main([root, '-o', outFile, '--pretty'])
-      const content = readFileSync(outFile, 'utf-8')
-      expect(content.trim().split('\n').length).toBeGreaterThan(1)
-      JSON.parse(content)
+    it('--pretty with -o writes pretty JSON', async () => {
+      const cap = captureOutput()
+      await main([root, '-o', 'out.json', '--pretty'], { write: cap.write })
+      expect(cap.output().trim().split('\n').length).toBeGreaterThan(1)
+      JSON.parse(cap.output())
     })
   })
 
@@ -247,7 +247,6 @@ describe('main', () => {
 
   describe('--include', () => {
     let root
-    let cap
 
     beforeAll(() => {
       root = setupFixture({
@@ -261,17 +260,16 @@ describe('main', () => {
       if (root) rmSync(root, { recursive: true, force: true })
     })
 
-    beforeEach(() => { cap = captureStdout() })
-    afterEach(() => { cap.restore() })
-
     it('--include scans only specified directories', async () => {
-      await main([root, '--include', 'src', '--compact'])
+      const cap = captureOutput()
+      await main([root, '--include', 'src', '--compact'], { write: cap.write })
       const index = JSON.parse(cap.output())
       expect(Object.keys(index)).toEqual(['src/app.js'])
     })
 
     it('multiple --include flags scan multiple directories', async () => {
-      await main([root, '--include', 'src', '--include', 'shared', '--compact'])
+      const cap = captureOutput()
+      await main([root, '--include', 'src', '--include', 'shared', '--compact'], { write: cap.write })
       const index = JSON.parse(cap.output())
       expect(Object.keys(index).sort()).toEqual(['shared/utils.js', 'src/app.js'])
     })
@@ -283,7 +281,8 @@ describe('main', () => {
         'shared/utils.js': 'export function util() {}\n'
       })
       try {
-        await main([rootWithCoverage, '--include', 'src', '--exclude', 'coverage', '--compact'])
+        const cap = captureOutput()
+        await main([rootWithCoverage, '--include', 'src', '--exclude', 'coverage', '--compact'], { write: cap.write })
         const index = JSON.parse(cap.output())
         expect(Object.keys(index)).toEqual(['src/app.js'])
       } finally {
@@ -294,7 +293,6 @@ describe('main', () => {
 
   describe('--exclude', () => {
     let root
-    let cap
 
     beforeAll(() => {
       root = setupFixture({
@@ -312,18 +310,17 @@ describe('main', () => {
       if (root) rmSync(root, { recursive: true, force: true })
     })
 
-    beforeEach(() => { cap = captureStdout() })
-    afterEach(() => { cap.restore() })
-
     it('--exclude skips matching directories', async () => {
-      await main([root, '--exclude', 'coverage', '--compact'])
+      const cap = captureOutput()
+      await main([root, '--exclude', 'coverage', '--compact'], { write: cap.write })
       const index = JSON.parse(cap.output())
       expect(Object.keys(index)).not.toContain('src/coverage/report.js')
       expect(Object.keys(index)).toContain('src/app.js')
     })
 
     it('multiple --exclude flags are additive', async () => {
-      await main([root, '--exclude', 'coverage', '--exclude', 'scripts', '--compact'])
+      const cap = captureOutput()
+      await main([root, '--exclude', 'coverage', '--exclude', 'scripts', '--compact'], { write: cap.write })
       const index = JSON.parse(cap.output())
       expect(Object.keys(index)).not.toContain('src/coverage/report.js')
       expect(Object.keys(index)).not.toContain('src/scripts/build.js')
@@ -338,7 +335,8 @@ describe('main', () => {
         'xray.config.js': "export default { exclude: ['coverage'] }\n"
       })
       try {
-        await main([rootWithConfig, '--exclude', 'scripts', '--compact'])
+        const cap = captureOutput()
+        await main([rootWithConfig, '--exclude', 'scripts', '--compact'], { write: cap.write })
         const index = JSON.parse(cap.output())
         expect(Object.keys(index)).not.toContain('src/coverage/report.js')
         expect(Object.keys(index)).not.toContain('src/scripts/build.js')

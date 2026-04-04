@@ -13,23 +13,8 @@
  *   node scripts/mutate.js --diff before.json after.json  # Compare reports
  */
 
-import { readdirSync, rmSync } from 'node:fs'
 import { createManualRunner, createVitestRunner } from 'mutagen'
 import { javascript } from 'mutagen/patterns'
-
-// Snapshot working directory before mutations run. Mutations that break CLI
-// argument parsing can cause tests to write files with flag-like names
-// (e.g. "--compact") as side effects. Clean these up on exit.
-const snapshot = new Set(readdirSync('.'))
-process.on('exit', () => {
-  try {
-    for (const entry of readdirSync('.')) {
-      if (!snapshot.has(entry) && entry.startsWith('--')) {
-        rmSync(entry, { force: true })
-      }
-    }
-  } catch {}
-})
 
 const sources = [
   'src/cli-core.js',

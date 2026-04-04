@@ -82,20 +82,24 @@ function shouldPrettyPrint(args) {
   return args.output || Boolean(process.stdout.isTTY)
 }
 
-function writeOutput(data, args) {
-  const indent = shouldPrettyPrint(args) ? 2 : undefined
-  const json = JSON.stringify(data, null, indent) + '\n'
-  if (args.output)
-    writeFileSync(args.output, json)
+function defaultWrite(json, outputPath) {
+  if (outputPath)
+    writeFileSync(outputPath, json)
   else
     process.stdout.write(json)
 }
 
-async function doScan(args) {
+function writeOutput(data, args, write) {
+  const indent = shouldPrettyPrint(args) ? 2 : undefined
+  const json = JSON.stringify(data, null, indent) + '\n'
+  write(json, args.output)
+}
+
+async function doScan(args, write) {
   const { scan } = await import('./scan.js')
   const options = { exclude: args.exclude, include: args.include }
   const index = await scan(resolve(args.dir || '.'), options)
-  writeOutput(selectQuery(args, index), args)
+  writeOutput(selectQuery(args, index), args, write)
 }
 
 async function getVersion() {
@@ -103,13 +107,13 @@ async function getVersion() {
   return VERSION
 }
 
-export async function main(argv) {
+export async function main(argv, { write = defaultWrite } = {}) {
   const args = parseArgs(argv)
   if (args.help)
     console.log(HELP)
   else if (args.version)
     console.log(await getVersion())
   else
-    await doScan(args)
+    await doScan(args, write)
   return 0
 }

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { rmSync } from 'node:fs'
 import { main } from '../src/cli-core.js'
 import { setupFixture } from './helpers/fixtures.js'
@@ -13,49 +13,25 @@ function captureOutput() {
   }
 }
 
-function captureConsole() {
-  const lines = []
-  const spy = vi.spyOn(console, 'log').mockImplementation((...args) => {
-    lines.push(args.join(' '))
-  })
-  return {
-    spy,
-    output: () => lines.join('\n'),
-    restore: () => spy.mockRestore()
-  }
-}
-
 describe('main', () => {
   it('prints help and returns 0', async () => {
-    const cap = captureConsole()
-    try {
-      const code = await main(['--help'])
-      expect(code).toBe(0)
-      expect(cap.output()).toContain('Usage: xray')
-    } finally {
-      cap.restore()
-    }
+    const cap = captureOutput()
+    const code = await main(['--help'], { write: cap.write })
+    expect(code).toBe(0)
+    expect(cap.output()).toContain('Usage: xray')
   })
 
   it('prints version and returns 0', async () => {
-    const cap = captureConsole()
-    try {
-      const code = await main(['--version'])
-      expect(code).toBe(0)
-      expect(cap.output().trim()).toMatch(/^\d+\.\d+\.\d+$/)
-    } finally {
-      cap.restore()
-    }
+    const cap = captureOutput()
+    const code = await main(['--version'], { write: cap.write })
+    expect(code).toBe(0)
+    expect(cap.output().trim()).toMatch(/^\d+\.\d+\.\d+$/)
   })
 
   it('help includes --exclude', async () => {
-    const cap = captureConsole()
-    try {
-      await main(['--help'])
-      expect(cap.output()).toContain('--exclude')
-    } finally {
-      cap.restore()
-    }
+    const cap = captureOutput()
+    await main(['--help'], { write: cap.write })
+    expect(cap.output()).toContain('--exclude')
   })
 
   it('defaults to scanning current directory when no dir argument given', async () => {
@@ -236,13 +212,9 @@ describe('main', () => {
   })
 
   it('help includes --include', async () => {
-    const cap = captureConsole()
-    try {
-      await main(['--help'])
-      expect(cap.output()).toContain('--include')
-    } finally {
-      cap.restore()
-    }
+    const cap = captureOutput()
+    await main(['--help'], { write: cap.write })
+    expect(cap.output()).toContain('--include')
   })
 
   describe('--include', () => {

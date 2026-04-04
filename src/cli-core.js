@@ -110,9 +110,9 @@ async function getVersion() {
 export async function main(argv, { write = defaultWrite } = {}) {
   const args = parseArgs(argv)
   if (args.help)
-    console.log(HELP)
+    write(HELP + '\n')
   else if (args.version)
-    console.log(await getVersion())
+    write(await getVersion() + '\n')
   else
     await doScan(args, write)
   return 0

@@ -37,6 +37,7 @@ const runner = createManualRunner({
   patterns: javascript,
   sources,
   testSources,
+  timeout: 5000,
   createRunner: (sourceFile) => createVitestRunner(sourceFile, {
     config: 'vitest.config.js',
     warm: false

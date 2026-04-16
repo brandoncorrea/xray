@@ -7,8 +7,7 @@ const jsxParser = Parser.extend(acornJsx())
 function nameFromDeclaration({ type, declarations, id }) {
   if (type === 'VariableDeclaration')
     return declarations.map(d => d.id.name)
-  if (type === 'FunctionDeclaration' || type === 'ClassDeclaration')
-    return [id.name]
+  return [id.name]
 }
 
 function isJsx(path) {

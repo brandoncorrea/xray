@@ -196,6 +196,14 @@ describe('main', () => {
       JSON.parse(cap.output())
     })
 
+    it('-o defaults to pretty-printed JSON', async () => {
+      const cap = captureOutput()
+      await main([root, '-o', 'out.json'], { write: cap.write })
+      const lines = cap.output().trim().split('\n')
+      expect(lines.length).toBeGreaterThan(1)
+      JSON.parse(cap.output())
+    })
+
     it('--compact with -o writes compact JSON', async () => {
       const cap = captureOutput()
       await main([root, '-o', 'out.json', '--compact'], { write: cap.write })
@@ -208,6 +216,13 @@ describe('main', () => {
       await main([root, '-o', 'out.json', '--pretty'], { write: cap.write })
       expect(cap.output().trim().split('\n').length).toBeGreaterThan(1)
       JSON.parse(cap.output())
+    })
+
+    it('ignores unknown flags and scans the directory', async () => {
+      const cap = captureOutput()
+      await main([root, '--bogus', '--compact'], { write: cap.write })
+      const index = JSON.parse(cap.output())
+      expect(index['src/math.js']).toBeDefined()
     })
   })
 

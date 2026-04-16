@@ -3,6 +3,8 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   test: {
     globals: false,
+    fileParallelism: true,
+    testTimeout: 2000,
     coverage: {
       provider: 'v8',
       include: ['src/**/*.js'],

@@ -7,11 +7,11 @@
   },
   "scripts": {
     "test": "vitest run",
-    "mutate": "node scripts/mutate.js",
-    "mutate:all": "node scripts/mutate.js --all --parallel 4 --json reports/mutation/all.json",
-    "mutate:all:json": "node scripts/mutate.js --all --parallel 4 --json",
-    "mutate:incremental": "node scripts/mutate.js --incremental --json",
-    "mutate:diff": "node scripts/mutate.js --diff",
+    "mutate": "mutagen",
+    "mutate:all": "mutagen --all --parallel 4 --json reports/mutation/all.json",
+    "mutate:all:json": "mutagen --all --parallel 4 --json",
+    "mutate:incremental": "mutagen --incremental --json",
+    "mutate:diff": "mutagen --diff",
     "coverage": "vitest run --coverage",
     "coverage:open": "vitest run --coverage && open coverage/index.html"
   },

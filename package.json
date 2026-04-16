@@ -12,8 +12,8 @@
     "mutate:all:json": "mutagen --all --parallel 4 --json",
     "mutate:incremental": "mutagen --incremental --json",
     "mutate:diff": "mutagen --diff",
-    "coverage": "vitest run --coverage",
-    "coverage:open": "vitest run --coverage && open coverage/index.html"
+    "test:coverage": "vitest run --coverage",
+    "test:coverage:open": "vitest run --coverage && open coverage/index.html"
   },
   "dependencies": {
     "acorn": "^8.16.0",

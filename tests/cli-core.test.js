@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { rmSync } from 'node:fs'
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
+import { rmSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { main } from '../src/cli-core.js'
 import { setupFixture } from './helpers/fixtures.js'
 
@@ -223,6 +224,37 @@ describe('main', () => {
       await main([root, '--bogus', '--compact'], { write: cap.write })
       const index = JSON.parse(cap.output())
       expect(index['src/math.js']).toBeDefined()
+    })
+  })
+
+  describe('defaultWrite (no write option)', () => {
+    it('writes to stdout when no output path given', async () => {
+      const spy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
+      try {
+        await main(['--help'])
+        expect(spy).toHaveBeenCalled()
+        expect(spy.mock.calls[0][0]).toContain('Usage: xray')
+      } finally {
+        spy.mockRestore()
+      }
+    })
+
+    it('writes to file when output path given', async () => {
+      const root = setupFixture({
+        'src/a.js': 'export const x = 1\n'
+      })
+      const outFile = join(root, 'result.json')
+      const spy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
+      try {
+        await main([root, '-o', outFile, '--compact'])
+        expect(spy).not.toHaveBeenCalled()
+        const content = readFileSync(outFile, 'utf-8')
+        const index = JSON.parse(content)
+        expect(index['src/a.js']).toBeDefined()
+      } finally {
+        spy.mockRestore()
+        rmSync(root, { recursive: true, force: true })
+      }
     })
   })
 

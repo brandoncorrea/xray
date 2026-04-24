@@ -17,7 +17,7 @@ function wrapGraph(graph) {
   const keys = Object.keys(graph)
   return {
     files: () => keys,
-    dependencies: file => graph[file] || [],
+    dependencies: file => graph[file],
     dependents: file => keys.filter(k => graph[k].includes(file))
   }
 }

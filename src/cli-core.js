@@ -65,7 +65,7 @@ function filterFile(file, index) {
 
 function filterDependencies(dependenciesOf, index) {
   const entry = index[dependenciesOf]
-  return entry ? { [dependenciesOf]: entry.dependencies } : {}
+  return entry ? { [dependenciesOf]: entry } : {}
 }
 
 function selectQuery(args, index) {

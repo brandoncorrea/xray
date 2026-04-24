@@ -137,14 +137,15 @@ describe('main', () => {
       await main([root, '--dependencies-of', 'src/main.js', '--compact'], { write: cap.write })
       const result = JSON.parse(cap.output())
       expect(Object.keys(result)).toEqual(['src/main.js'])
-      expect(result['src/main.js'].sort()).toEqual(['src/calc.js', 'src/math.js'])
+      expect(result['src/main.js'].dependencies.sort()).toEqual(['src/calc.js', 'src/math.js'])
     })
 
-    it('--dependencies-of for file with no deps outputs empty array', async () => {
+    it('--dependencies-of for file with no deps returns entry with empty dependencies', async () => {
       const cap = captureOutput()
       await main([root, '--dependencies-of', 'src/math.js', '--compact'], { write: cap.write })
       const result = JSON.parse(cap.output())
-      expect(result['src/math.js']).toEqual([])
+      expect(result['src/math.js'].dependencies).toEqual([])
+      expect(result['src/math.js'].exports).toEqual(['add', 'subtract'])
     })
 
     it('--dependencies-of for unknown file outputs empty object', async () => {

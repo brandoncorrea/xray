@@ -24,7 +24,8 @@ export function extractExports(filePath) {
       sourceType: 'module',
       ecmaVersion: 'latest'
     })
-  } catch {
+  } catch (err) {
+    process.stderr.write(`xray: warning: failed to parse ${filePath}: ${err.message}\n`)
     return { exports: [], reExports: [] }
   }
 

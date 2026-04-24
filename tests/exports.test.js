@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import { extractExports } from '../src/exports.js'
 import { writeFileSync, mkdtempSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
@@ -121,6 +121,20 @@ describe('extractExports', () => {
   it('returns empty result for malformed JS that acorn cannot parse', () => {
     const file = writeTempFile('export const = ;; {{{')
     expect(extractExports(file)).toEqual({ exports: [], reExports: [] })
+  })
+
+  it('writes a warning to stderr when parsing fails', () => {
+    const file = writeTempFile('export const = ;; {{{')
+    const stderrWrite = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
+    try {
+      extractExports(file)
+      expect(stderrWrite).toHaveBeenCalledOnce()
+      const msg = stderrWrite.mock.calls[0][0]
+      expect(msg).toContain('xray: warning:')
+      expect(msg).toContain(file)
+    } finally {
+      stderrWrite.mockRestore()
+    }
   })
 
   it('extracts string-literal aliased export name', () => {

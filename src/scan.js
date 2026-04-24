@@ -1,6 +1,5 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import madge from 'madge'
 import { extractExports } from './exports.js'
 import { findTestFiles } from './testFiles.js'
 import { loadConfig } from './config.js'
@@ -11,19 +10,29 @@ export async function scan(directory, options = {}) {
     config.include = options.include
   if (options.exclude?.length)
     config.exclude = distinctConcat(config.exclude, options.exclude)
-  return buildIndex(directory, config)
+  return buildIndex(directory, config, options.buildGraph)
 }
 
-async function buildIndex(baseDir, config) {
+async function madgeBuildGraph(target, opts) {
+  const { default: madge } = await import('madge')
+  return madge(target, opts)
+}
+
+async function buildIndex(baseDir, config, buildGraph) {
   const excludeRegExp = config.exclude.map(toExcludeRegExp)
   const fileExtensions = config.extensions.map(e => e.replace(/^\./, ''))
   const madgeOpts = { baseDir, fileExtensions, excludeRegExp }
   const target = scanTarget(baseDir, config.include)
-  const res = await madge(target, madgeOpts)
+  const res = buildGraph
+    ? await buildGraph()
+    : await madgeBuildGraph(target, madgeOpts)
   const graph = res.obj()
   const index = {}
 
   for (const file of Object.keys(graph)) {
+    if (!hasExtension(file, fileExtensions)) continue
+    if (excludeRegExp.some(re => re.test(file))) continue
+    if (!matchesInclude(file, config.include)) continue
     const absPath = join(baseDir, file)
     const { exports, reExports } = extractExports(absPath)
     index[file] = {
@@ -41,6 +50,15 @@ async function buildIndex(baseDir, config) {
 
 function distinctConcat(coll1, coll2) {
   return [...new Set([...coll1, ...coll2])]
+}
+
+function hasExtension(file, extensions) {
+  return extensions.some(ext => file.endsWith('.' + ext))
+}
+
+function matchesInclude(file, include) {
+  if (!include.length) return true
+  return include.some(dir => file.startsWith(dir + '/') || file === dir)
 }
 
 function toExcludeRegExp(exclusion) {

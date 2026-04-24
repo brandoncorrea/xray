@@ -37,14 +37,14 @@ describe('main', () => {
   })
 
   it('defaults to scanning current directory when no dir argument given', async () => {
-    const root = setupFixture({
+    const { root, buildGraph } = setupFixture({
       'src/hello.js': 'export function hello() {}\n'
     })
     const cap = captureOutput()
     const origCwd = process.cwd()
     try {
       process.chdir(root)
-      await main(['--compact'], { write: cap.write })
+      await main(['--compact'], { write: cap.write, buildGraph })
       const index = JSON.parse(cap.output())
       expect(Object.keys(index)).toEqual(['src/hello.js'])
     } finally {
@@ -54,10 +54,10 @@ describe('main', () => {
   })
 
   describe('with fixture directory', () => {
-    let root
+    let root, buildGraph
 
     beforeAll(() => {
-      root = setupFixture({
+      ;({ root, buildGraph } = setupFixture({
         'src/math.js': [
           'export function add(a, b) { return a + b }',
           'export function subtract(a, b) { return a - b }'
@@ -72,7 +72,7 @@ describe('main', () => {
           'export function run() { return double(subtract(10, 3)) }'
         ].join('\n'),
         'tests/math.test.js': '// test for math\n'
-      })
+      }))
     })
 
     afterAll(() => {
@@ -81,7 +81,7 @@ describe('main', () => {
 
     it('full scan outputs JSON', async () => {
       const cap = captureOutput()
-      await main([root, '--compact'], { write: cap.write })
+      await main([root, '--compact'], { write: cap.write, buildGraph })
       const index = JSON.parse(cap.output())
       expect(Object.keys(index).sort()).toEqual([
         'src/calc.js', 'src/main.js', 'src/math.js', 'tests/math.test.js'
@@ -91,7 +91,7 @@ describe('main', () => {
 
     it('--output passes output path to writer', async () => {
       const cap = captureOutput()
-      await main([root, '--output', 'out.json'], { write: cap.write })
+      await main([root, '--output', 'out.json'], { write: cap.write, buildGraph })
       expect(cap.path()).toBe('out.json')
       const index = JSON.parse(cap.output())
       expect(index['src/math.js'].exports).toEqual(['add', 'subtract'])
@@ -99,7 +99,7 @@ describe('main', () => {
 
     it('-o passes output path to writer', async () => {
       const cap = captureOutput()
-      await main([root, '-o', 'out.json'], { write: cap.write })
+      await main([root, '-o', 'out.json'], { write: cap.write, buildGraph })
       expect(cap.path()).toBe('out.json')
       const index = JSON.parse(cap.output())
       expect(Object.keys(index)).toContain('src/calc.js')
@@ -107,7 +107,7 @@ describe('main', () => {
 
     it('--file shows detail for a single file', async () => {
       const cap = captureOutput()
-      await main([root, '--file', 'src/math.js', '--compact'], { write: cap.write })
+      await main([root, '--file', 'src/math.js', '--compact'], { write: cap.write, buildGraph })
       const result = JSON.parse(cap.output())
       expect(Object.keys(result)).toEqual(['src/math.js'])
       expect(result['src/math.js'].exports).toEqual(['add', 'subtract'])
@@ -116,26 +116,26 @@ describe('main', () => {
 
     it('--file for unknown file outputs empty object', async () => {
       const cap = captureOutput()
-      await main([root, '--file', 'src/nope.js', '--compact'], { write: cap.write })
+      await main([root, '--file', 'src/nope.js', '--compact'], { write: cap.write, buildGraph })
       expect(JSON.parse(cap.output())).toEqual({})
     })
 
     it('--dependents-of lists files that import the target', async () => {
       const cap = captureOutput()
-      await main([root, '--dependents-of', 'src/math.js', '--compact'], { write: cap.write })
+      await main([root, '--dependents-of', 'src/math.js', '--compact'], { write: cap.write, buildGraph })
       const result = JSON.parse(cap.output())
       expect(Object.keys(result).sort()).toEqual(['src/calc.js', 'src/main.js'])
     })
 
     it('--dependents-of for leaf file outputs empty object', async () => {
       const cap = captureOutput()
-      await main([root, '--dependents-of', 'src/main.js', '--compact'], { write: cap.write })
+      await main([root, '--dependents-of', 'src/main.js', '--compact'], { write: cap.write, buildGraph })
       expect(JSON.parse(cap.output())).toEqual({})
     })
 
     it('--dependencies-of lists modules imported by the target', async () => {
       const cap = captureOutput()
-      await main([root, '--dependencies-of', 'src/main.js', '--compact'], { write: cap.write })
+      await main([root, '--dependencies-of', 'src/main.js', '--compact'], { write: cap.write, buildGraph })
       const result = JSON.parse(cap.output())
       expect(Object.keys(result)).toEqual(['src/main.js'])
       expect(result['src/main.js'].dependencies.sort()).toEqual(['src/calc.js', 'src/math.js'])
@@ -143,7 +143,7 @@ describe('main', () => {
 
     it('--dependencies-of for file with no deps returns entry with empty dependencies', async () => {
       const cap = captureOutput()
-      await main([root, '--dependencies-of', 'src/math.js', '--compact'], { write: cap.write })
+      await main([root, '--dependencies-of', 'src/math.js', '--compact'], { write: cap.write, buildGraph })
       const result = JSON.parse(cap.output())
       expect(result['src/math.js'].dependencies).toEqual([])
       expect(result['src/math.js'].exports).toEqual(['add', 'subtract'])
@@ -151,7 +151,7 @@ describe('main', () => {
 
     it('--dependencies-of for unknown file outputs empty object', async () => {
       const cap = captureOutput()
-      await main([root, '--dependencies-of', 'src/nope.js', '--compact'], { write: cap.write })
+      await main([root, '--dependencies-of', 'src/nope.js', '--compact'], { write: cap.write, buildGraph })
       expect(JSON.parse(cap.output())).toEqual({})
     })
 
@@ -160,7 +160,7 @@ describe('main', () => {
       const origIsTTY = process.stdout.isTTY
       try {
         process.stdout.isTTY = true
-        await main([root], { write: cap.write })
+        await main([root], { write: cap.write, buildGraph })
         const lines = cap.output().trim().split('\n')
         expect(lines.length).toBeGreaterThan(1)
         expect(cap.output()).toContain('  ')
@@ -175,7 +175,7 @@ describe('main', () => {
       const origIsTTY = process.stdout.isTTY
       try {
         process.stdout.isTTY = undefined
-        await main([root], { write: cap.write })
+        await main([root], { write: cap.write, buildGraph })
         expect(cap.output().trim().split('\n')).toHaveLength(1)
         JSON.parse(cap.output())
       } finally {
@@ -185,14 +185,14 @@ describe('main', () => {
 
     it('--compact outputs single-line JSON', async () => {
       const cap = captureOutput()
-      await main([root, '--compact'], { write: cap.write })
+      await main([root, '--compact'], { write: cap.write, buildGraph })
       expect(cap.output().trim().split('\n')).toHaveLength(1)
       JSON.parse(cap.output())
     })
 
     it('--pretty outputs indented JSON', async () => {
       const cap = captureOutput()
-      await main([root, '--pretty'], { write: cap.write })
+      await main([root, '--pretty'], { write: cap.write, buildGraph })
       const lines = cap.output().trim().split('\n')
       expect(lines.length).toBeGreaterThan(1)
       expect(cap.output()).toContain('  ')
@@ -201,7 +201,7 @@ describe('main', () => {
 
     it('-o defaults to pretty-printed JSON', async () => {
       const cap = captureOutput()
-      await main([root, '-o', 'out.json'], { write: cap.write })
+      await main([root, '-o', 'out.json'], { write: cap.write, buildGraph })
       const lines = cap.output().trim().split('\n')
       expect(lines.length).toBeGreaterThan(1)
       JSON.parse(cap.output())
@@ -209,21 +209,21 @@ describe('main', () => {
 
     it('--compact with -o writes compact JSON', async () => {
       const cap = captureOutput()
-      await main([root, '-o', 'out.json', '--compact'], { write: cap.write })
+      await main([root, '-o', 'out.json', '--compact'], { write: cap.write, buildGraph })
       expect(cap.output().trim().split('\n')).toHaveLength(1)
       JSON.parse(cap.output())
     })
 
     it('--pretty with -o writes pretty JSON', async () => {
       const cap = captureOutput()
-      await main([root, '-o', 'out.json', '--pretty'], { write: cap.write })
+      await main([root, '-o', 'out.json', '--pretty'], { write: cap.write, buildGraph })
       expect(cap.output().trim().split('\n').length).toBeGreaterThan(1)
       JSON.parse(cap.output())
     })
 
     it('--files-only outputs sorted file paths as a JSON array', async () => {
       const cap = captureOutput()
-      await main([root, '--files-only', '--compact'], { write: cap.write })
+      await main([root, '--files-only', '--compact'], { write: cap.write, buildGraph })
       const result = JSON.parse(cap.output())
       expect(result).toEqual([
         'src/calc.js', 'src/main.js', 'src/math.js', 'tests/math.test.js'
@@ -232,7 +232,7 @@ describe('main', () => {
 
     it('--files-only combined with --dependents-of filters then lists paths', async () => {
       const cap = captureOutput()
-      await main([root, '--files-only', '--dependents-of', 'src/math.js', '--compact'], { write: cap.write })
+      await main([root, '--files-only', '--dependents-of', 'src/math.js', '--compact'], { write: cap.write, buildGraph })
       const result = JSON.parse(cap.output())
       expect(result).toEqual(['src/calc.js', 'src/main.js'])
     })
@@ -241,7 +241,7 @@ describe('main', () => {
       const cap = captureOutput()
       const spy = vi.spyOn(output, 'error')
       try {
-        const code = await main([root, '--bogus', '--compact'], { write: cap.write })
+        const code = await main([root, '--bogus', '--compact'], { write: cap.write, buildGraph })
         expect(code).toBe(1)
         expect(spy).toHaveBeenCalled()
         expect(spy.mock.calls[0][0]).toContain('--bogus')
@@ -254,7 +254,7 @@ describe('main', () => {
       const cap = captureOutput()
       const spy = vi.spyOn(output, 'error')
       try {
-        const code = await main([root, '--bogus', '--nope'], { write: cap.write })
+        const code = await main([root, '--bogus', '--nope'], { write: cap.write, buildGraph })
         expect(code).toBe(1)
         const msg = spy.mock.calls[0][0]
         expect(msg).toContain('--bogus')
@@ -278,13 +278,13 @@ describe('main', () => {
     })
 
     it('writes to file when output path given', async () => {
-      const root = setupFixture({
+      const { root, buildGraph } = setupFixture({
         'src/a.js': 'export const x = 1\n'
       })
       const outFile = join(root, 'result.json')
       const spy = vi.spyOn(output, 'log').mockImplementation(() => true)
       try {
-        await main([root, '-o', outFile, '--compact'])
+        await main([root, '-o', outFile, '--compact'], { buildGraph })
         expect(spy).not.toHaveBeenCalled()
         const content = readFileSync(outFile, 'utf-8')
         const index = JSON.parse(content)
@@ -309,14 +309,14 @@ describe('main', () => {
   })
 
   describe('--include', () => {
-    let root
+    let root, buildGraph
 
     beforeAll(() => {
-      root = setupFixture({
+      ;({ root, buildGraph } = setupFixture({
         'src/app.js': 'export function main() { return 1 }\n',
         'shared/utils.js': 'export function util() { return 2 }\n',
         'vendor/lib.js': 'export function lib() { return 3 }\n'
-      })
+      }))
     })
 
     afterAll(() => {
@@ -325,27 +325,27 @@ describe('main', () => {
 
     it('--include scans only specified directories', async () => {
       const cap = captureOutput()
-      await main([root, '--include', 'src', '--compact'], { write: cap.write })
+      await main([root, '--include', 'src', '--compact'], { write: cap.write, buildGraph })
       const index = JSON.parse(cap.output())
       expect(Object.keys(index)).toEqual(['src/app.js'])
     })
 
     it('multiple --include flags scan multiple directories', async () => {
       const cap = captureOutput()
-      await main([root, '--include', 'src', '--include', 'shared', '--compact'], { write: cap.write })
+      await main([root, '--include', 'src', '--include', 'shared', '--compact'], { write: cap.write, buildGraph })
       const index = JSON.parse(cap.output())
       expect(Object.keys(index).sort()).toEqual(['shared/utils.js', 'src/app.js'])
     })
 
     it('--include with --exclude narrows then removes', async () => {
-      const rootWithCoverage = setupFixture({
+      const { root: rootWithCoverage, buildGraph: bg } = setupFixture({
         'src/app.js': 'export function main() {}\n',
         'src/coverage/report.js': 'export function report() {}\n',
         'shared/utils.js': 'export function util() {}\n'
       })
       try {
         const cap = captureOutput()
-        await main([rootWithCoverage, '--include', 'src', '--exclude', 'coverage', '--compact'], { write: cap.write })
+        await main([rootWithCoverage, '--include', 'src', '--exclude', 'coverage', '--compact'], { write: cap.write, buildGraph: bg })
         const index = JSON.parse(cap.output())
         expect(Object.keys(index)).toEqual(['src/app.js'])
       } finally {
@@ -355,10 +355,10 @@ describe('main', () => {
   })
 
   describe('--exclude', () => {
-    let root
+    let root, buildGraph
 
     beforeAll(() => {
-      root = setupFixture({
+      ;({ root, buildGraph } = setupFixture({
         'src/app.js': [
           "import { helper } from './utils/helper.js'",
           'export function main() { return helper() }'
@@ -366,7 +366,7 @@ describe('main', () => {
         'src/utils/helper.js': 'export function helper() { return 1 }\n',
         'src/coverage/report.js': 'export function report() {}\n',
         'src/scripts/build.js': 'export function build() {}\n'
-      })
+      }))
     })
 
     afterAll(() => {
@@ -375,7 +375,7 @@ describe('main', () => {
 
     it('--exclude skips matching directories', async () => {
       const cap = captureOutput()
-      await main([root, '--exclude', 'coverage', '--compact'], { write: cap.write })
+      await main([root, '--exclude', 'coverage', '--compact'], { write: cap.write, buildGraph })
       const index = JSON.parse(cap.output())
       expect(Object.keys(index)).not.toContain('src/coverage/report.js')
       expect(Object.keys(index)).toContain('src/app.js')
@@ -383,7 +383,7 @@ describe('main', () => {
 
     it('multiple --exclude flags are additive', async () => {
       const cap = captureOutput()
-      await main([root, '--exclude', 'coverage', '--exclude', 'scripts', '--compact'], { write: cap.write })
+      await main([root, '--exclude', 'coverage', '--exclude', 'scripts', '--compact'], { write: cap.write, buildGraph })
       const index = JSON.parse(cap.output())
       expect(Object.keys(index)).not.toContain('src/coverage/report.js')
       expect(Object.keys(index)).not.toContain('src/scripts/build.js')
@@ -391,7 +391,7 @@ describe('main', () => {
     })
 
     it('--exclude is additive with config.exclude', async () => {
-      const rootWithConfig = setupFixture({
+      const { root: rootWithConfig, buildGraph: bg } = setupFixture({
         'src/app.js': 'export function main() {}\n',
         'src/coverage/report.js': 'export function report() {}\n',
         'src/scripts/build.js': 'export function build() {}\n',
@@ -399,7 +399,7 @@ describe('main', () => {
       })
       try {
         const cap = captureOutput()
-        await main([rootWithConfig, '--exclude', 'scripts', '--compact'], { write: cap.write })
+        await main([rootWithConfig, '--exclude', 'scripts', '--compact'], { write: cap.write, buildGraph: bg })
         const index = JSON.parse(cap.output())
         expect(Object.keys(index)).not.toContain('src/coverage/report.js')
         expect(Object.keys(index)).not.toContain('src/scripts/build.js')

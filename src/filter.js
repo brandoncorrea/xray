@@ -1,4 +1,4 @@
-export function selectQuery(args, index) {
+export function filterIndex(args, index) {
   if (args.file)
     return filterFile(args.file, index)
   if (args.dependentsOf)

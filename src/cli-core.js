@@ -2,7 +2,7 @@ import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { parseArgs } from './args.js'
 import { VERSION } from './index.js'
-import { selectQuery } from './query.js'
+import { filterIndex } from './filter.js'
 import { scan } from './scan.js'
 
 const HELP = `xray - dependency analysis tool
@@ -44,7 +44,7 @@ async function doScan(args, write) {
     include: args.include
   }
   const index = await scan(resolve(args.dir || '.'), options)
-  const result = selectQuery(args, index)
+  const result = filterIndex(args, index)
   const data = args.filesOnly ? Object.keys(result).sort() : result
   writeOutput(data, args, write)
 }

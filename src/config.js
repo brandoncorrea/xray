@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url'
 import { DEFAULT_TEST_PATTERNS } from './testFiles.js'
 
 export const DEFAULTS = {
-  extensions: ['.js', '.jsx'],
+  extensions: ['.js', '.jsx', '.ts', '.tsx'],
   exclude: [],
   include: [],
   testPatterns: DEFAULT_TEST_PATTERNS

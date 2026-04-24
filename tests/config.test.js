@@ -62,6 +62,11 @@ export default {
     }
   })
 
+  it('includes TypeScript extensions in defaults', async () => {
+    expect(DEFAULTS.extensions).toContain('.ts')
+    expect(DEFAULTS.extensions).toContain('.tsx')
+  })
+
   it('config values replace defaults (not merge)', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'xray-cfg-'))
     try {

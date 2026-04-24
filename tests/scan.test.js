@@ -241,6 +241,28 @@ describe('scan', () => {
     expect(Object.keys(result)).toEqual(['src/app.js'])
   })
 
+  it('tracks named re-exports as dependencies', () => {
+    root = setupFixture({
+      'src/math.js': 'export function add(a, b) { return a + b }\n',
+      'src/index.js': "export { add } from './math.js'\n"
+    })
+
+    const result = scan(root, {}, defaults())
+    expect(result['src/index.js'].dependencies).toEqual(['src/math.js'])
+    expect(result['src/math.js'].dependents).toEqual(['src/index.js'])
+  })
+
+  it('tracks star re-exports as dependencies', () => {
+    root = setupFixture({
+      'src/math.js': 'export function add(a, b) { return a + b }\n',
+      'src/index.js': "export * from './math.js'\n"
+    })
+
+    const result = scan(root, {}, defaults())
+    expect(result['src/index.js'].dependencies).toEqual(['src/math.js'])
+    expect(result['src/math.js'].dependents).toEqual(['src/index.js'])
+  })
+
   it('exclude pattern uses regex boundary — does not match partial directory names', () => {
     root = setupFixture({
       'src/scripts/build.js': 'export function build() {}\n',

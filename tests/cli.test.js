@@ -1,16 +1,24 @@
 import { describe, it, expect, vi } from 'vitest'
-import { main } from '../src/cli-core.js'
+import { pathToFileURL, fileURLToPath } from 'node:url'
+import { dirname, join } from 'node:path'
 import output from '../src/output.js'
 
+const cliPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'cli.js')
+
 describe('cli entry point', () => {
-  it('main prints help to output.log', async () => {
-    const spy = vi.spyOn(output, 'log')
+  it('passes process.argv to main and exits with its return code', async () => {
+    const originalArgv = process.argv
+    const exit = vi.spyOn(process, 'exit').mockImplementation(() => {})
+    const log = vi.spyOn(output, 'log')
     try {
-      const code = await main(['--help'])
-      expect(code).toBe(0)
-      expect(spy.mock.calls[0][0]).toContain('Usage: xray')
+      process.argv = ['node', 'cli.js', '--help']
+      await import(pathToFileURL(cliPath).href + '?t=' + Date.now())
+      expect(log.mock.calls[0][0]).toContain('Usage: xray')
+      expect(exit).toHaveBeenCalledWith(0)
     } finally {
-      spy.mockRestore()
+      process.argv = originalArgv
+      exit.mockRestore()
+      log.mockRestore()
     }
   })
 })

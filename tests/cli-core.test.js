@@ -267,7 +267,7 @@ describe('main', () => {
 
   describe('defaultWrite (no write option)', () => {
     it('writes to stdout when no output path given', async () => {
-      const spy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
+      const spy = vi.spyOn(output, 'log').mockImplementation(() => true)
       try {
         await main(['--help'])
         expect(spy).toHaveBeenCalled()
@@ -282,7 +282,7 @@ describe('main', () => {
         'src/a.js': 'export const x = 1\n'
       })
       const outFile = join(root, 'result.json')
-      const spy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
+      const spy = vi.spyOn(output, 'log').mockImplementation(() => true)
       try {
         await main([root, '-o', outFile, '--compact'])
         expect(spy).not.toHaveBeenCalled()

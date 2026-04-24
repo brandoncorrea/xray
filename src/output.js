@@ -1,7 +1,9 @@
+let impl = createConsoleOutput()
+
 export function createConsoleOutput() {
   return {
-    log: (message) => process.stdout.write(message),
-    error: (message) => process.stderr.write(message)
+    log: message => process.stdout.write(message),
+    error: message => process.stderr.write(message)
   }
 }
 
@@ -12,10 +14,8 @@ export function createSilentOutput() {
   }
 }
 
-function configure(impl) {
-  output.log = impl.log
-  output.error = impl.error
+export default {
+  log(message) { impl.log(message) },
+  error(message) { impl.error(message) },
+  configure(output) { impl = output }
 }
-
-const output = { ...createConsoleOutput(), configure }
-export default output

@@ -60,7 +60,7 @@ function defaultWrite(json, outputPath) {
   if (outputPath)
     writeFileSync(outputPath, json)
   else
-    process.stdout.write(json)
+    output.log(json)
 }
 
 function shouldPrettyPrint(args) {

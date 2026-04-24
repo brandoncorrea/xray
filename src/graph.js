@@ -1,6 +1,6 @@
 import { readdirSync } from 'node:fs'
 import { join, dirname, normalize, relative } from 'node:path'
-import { parseFileAst } from './parser.js'
+import { analyzeFile } from './parser.js'
 
 export function buildGraph(baseDir, config) {
   return wrapGraph(compileSources(baseDir, config))
@@ -8,8 +8,15 @@ export function buildGraph(baseDir, config) {
 
 function compileSources(baseDir, config) {
   const graph = {}
-  for (const file of discoverFiles(baseDir, config))
-    graph[file] = extractImports(join(baseDir, file), baseDir)
+  for (const file of discoverFiles(baseDir, config)) {
+    const absPath = join(baseDir, file)
+    const analysis = analyzeFile(absPath)
+    graph[file] = {
+      imports: resolveImports(analysis.imports, absPath, baseDir),
+      exports: analysis.exports,
+      reExports: analysis.reExports
+    }
+  }
   return graph
 }
 
@@ -17,8 +24,12 @@ function wrapGraph(graph) {
   const keys = Object.keys(graph)
   return {
     files: () => keys,
-    dependencies: file => graph[file],
-    dependents: file => keys.filter(k => graph[k].includes(file))
+    dependencies: file => graph[file].imports,
+    dependents: file => keys.filter(k => graph[k].imports.includes(file)),
+    fileExports: file => ({
+      exports: graph[file].exports,
+      reExports: graph[file].reExports
+    })
   }
 }
 
@@ -76,19 +87,6 @@ function matchesInclude(file, include) {
 
 function toExcludeRegExp(exclusion) {
   return new RegExp(`(^|/)${exclusion}/`)
-}
-
-function extractImports(absPath, baseDir) {
-  const rawImports = []
-  for (const node of parseFileAst(absPath)) {
-    if (node.type === 'ImportDeclaration')
-      rawImports.push(node.source.value)
-    else if (node.type === 'ExportNamedDeclaration' && node.source)
-      rawImports.push(node.source.value)
-    else if (node.type === 'ExportAllDeclaration')
-      rawImports.push(node.source.value)
-  }
-  return resolveImports(rawImports, absPath, baseDir)
 }
 
 function resolveImports(rawImports, absPath, baseDir) {

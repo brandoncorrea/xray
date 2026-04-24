@@ -1,6 +1,5 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { extractExports } from './exports.js'
 import { findTestFiles } from './testFiles.js'
 import { buildGraph } from './graph.js'
 
@@ -22,7 +21,7 @@ function buildIndex(baseDir, graph, testPatterns) {
 
 function compileFileInfo(baseDir, graph, testPatterns, file) {
   const absPath = join(baseDir, file)
-  const { exports, reExports } = extractExports(absPath)
+  const { exports, reExports } = graph.fileExports(file)
   return {
     exports,
     reExports,

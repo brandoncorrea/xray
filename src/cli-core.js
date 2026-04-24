@@ -23,7 +23,9 @@ Options:
   --compact                 Force compact (single-line) JSON output
   --pretty                  Force pretty-printed JSON output
   --help, -h                Show this help message
-  --version, -v             Show version`
+  --version, -v             Show version
+
+Config: xray.config.js (extensions, exclude, include, testPatterns)`
 
 export async function main(argv, { write = defaultWrite } = {}) {
   const args = parseArgs(argv)

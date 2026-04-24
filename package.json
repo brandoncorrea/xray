@@ -7,7 +7,7 @@
   },
   "scripts": {
     "test": "vitest run",
-    "mutate": "mutagen --incremental --progress --parallel 4 --json reports/mutation/all.json",
+    "mutate": "mutagen --incremental --progress --parallel 8 --json reports/mutation/all.json",
     "test:coverage": "vitest run --coverage",
     "test:coverage:open": "vitest run --coverage && open coverage/index.html"
   },

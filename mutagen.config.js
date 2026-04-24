@@ -4,6 +4,7 @@ import { createVitestRunner } from '@bwawan/mutagen'
 export default {
   mutators: javascript,
   include: ['src/**/*.js'],
+  testInclude: ['tests/**/*.test.js'],
   createRunner: (sourceFile, opts = {}) => createVitestRunner(sourceFile, {
     config: 'vitest.config.js',
     ...opts

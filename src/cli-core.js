@@ -13,6 +13,7 @@ Options:
   --dependencies-of <path>  List modules imported by the given file
   --include <dir>           Scan only this directory (repeatable)
   --exclude <dir>           Skip directory during scan (repeatable)
+  --files-only              Output only file paths as a JSON array
   --compact                 Force compact (single-line) JSON output
   --pretty                  Force pretty-printed JSON output
   --help, -h                Show this help message
@@ -38,6 +39,8 @@ function parseArgs(argv) {
       parsed.include.push(argv[++i])
     else if (arg === '--exclude')
       parsed.exclude.push(argv[++i])
+    else if (arg === '--files-only')
+      parsed.filesOnly = true
     else if (arg === '--compact')
       parsed.compact = true
     else if (arg === '--pretty')
@@ -101,7 +104,9 @@ async function doScan(args, write) {
   const { scan } = await import('./scan.js')
   const options = { exclude: args.exclude, include: args.include }
   const index = await scan(resolve(args.dir || '.'), options)
-  writeOutput(selectQuery(args, index), args, write)
+  const result = selectQuery(args, index)
+  const data = args.filesOnly ? Object.keys(result).sort() : result
+  writeOutput(data, args, write)
 }
 
 async function getVersion() {

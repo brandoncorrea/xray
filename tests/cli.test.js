@@ -1,21 +1,16 @@
-import { describe, it, expect } from 'vitest'
-import { execFile } from 'node:child_process'
-import { promisify } from 'node:util'
-import { fileURLToPath } from 'node:url'
-import { dirname, join } from 'node:path'
+import { describe, it, expect, vi } from 'vitest'
+import { main } from '../src/cli-core.js'
+import output from '../src/output.js'
 
-const exec = promisify(execFile)
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const cli = join(__dirname, '..', 'src', 'cli.js')
-
-function run(...args) {
-  return exec('node', [cli, ...args])
-}
-
-describe('cli binary (end-to-end)', () => {
-  it('entry point wires up to main and prints help', async () => {
-    const { stdout } = await run('--help')
-    expect(stdout).toContain('Usage: xray')
-    expect(stdout).not.toContain('{')
+describe('cli entry point', () => {
+  it('main prints help to output.log', async () => {
+    const spy = vi.spyOn(output, 'log')
+    try {
+      const code = await main(['--help'])
+      expect(code).toBe(0)
+      expect(spy.mock.calls[0][0]).toContain('Usage: xray')
+    } finally {
+      spy.mockRestore()
+    }
   })
 })

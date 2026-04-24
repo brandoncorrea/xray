@@ -1,11 +1,6 @@
-import { readdirSync, readFileSync } from 'node:fs'
+import { readdirSync } from 'node:fs'
 import { join, dirname, normalize, relative } from 'node:path'
-import { Parser } from 'acorn'
-import acornJsx from 'acorn-jsx'
-
-const JSX_EXTENSIONS = ['.jsx', '.tsx']
-const jsxParser = Parser.extend(acornJsx())
-const PARSER_OPTIONS = { sourceType: 'module', ecmaVersion: 'latest' }
+import { parseFileAst } from './parser.js'
 
 export function buildGraph(baseDir, config) {
   return wrapGraph(compileSources(baseDir, config))
@@ -84,10 +79,8 @@ function toExcludeRegExp(exclusion) {
 }
 
 function extractImports(absPath, baseDir) {
-  const ast = parseFile(absPath)
-  if (!ast) return []
   const rawImports = []
-  for (const node of ast) {
+  for (const node of parseFileAst(absPath)) {
     if (node.type === 'ImportDeclaration')
       rawImports.push(node.source.value)
     else if (node.type === 'ExportNamedDeclaration' && node.source)
@@ -104,17 +97,4 @@ function resolveImports(rawImports, absPath, baseDir) {
     .filter(imp => imp.startsWith('.'))
     .map(imp => normalize(join(relDir, imp)).replaceAll('\\', '/'))
     .filter(resolved => !resolved.startsWith('..'))
-}
-
-function parseFile(absPath) {
-  try {
-    const source = readFileSync(absPath, 'utf-8')
-    const parser = isJsx(absPath) ? jsxParser : Parser
-    return parser.parse(source, PARSER_OPTIONS).body
-  } catch {
-  }
-}
-
-function isJsx(path) {
-  return JSX_EXTENSIONS.some(ext => path.endsWith(ext))
 }

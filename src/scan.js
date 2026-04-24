@@ -17,19 +17,22 @@ export async function scan(directory, options = {}) {
 
 function buildIndex(baseDir, graph, testPatterns) {
   const index = {}
-  for (const file of graph.files()) {
-    const absPath = join(baseDir, file)
-    const { exports, reExports } = extractExports(absPath)
-    index[file] = {
-      exports,
-      reExports,
-      dependencies: graph.dependencies(file),
-      dependents: graph.dependents(file),
-      tests: findTestFiles(file, baseDir, testPatterns),
-      lines: getLineCount(absPath)
-    }
-  }
+  for (const file of graph.files())
+    index[file] = compileFileInfo(baseDir, graph, testPatterns, file)
   return index
+}
+
+function compileFileInfo(baseDir, graph, testPatterns, file) {
+  const absPath = join(baseDir, file)
+  const { exports, reExports } = extractExports(absPath)
+  return {
+    exports,
+    reExports,
+    dependencies: graph.dependencies(file),
+    dependents: graph.dependents(file),
+    tests: findTestFiles(file, baseDir, testPatterns),
+    lines: getLineCount(absPath)
+  }
 }
 
 function distinctConcat(coll1, coll2) {

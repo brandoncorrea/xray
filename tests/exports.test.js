@@ -55,9 +55,19 @@ describe('extractExports', () => {
     expect(extractExports(file)).toEqual({ exports: ['external'], reExports: [] })
   })
 
-  it('ignores export default', () => {
+  it('tracks export default function', () => {
     const file = writeTempFile('export default function main() {}\nexport const named = 1\n')
-    expect(extractExports(file)).toEqual({ exports: ['named'], reExports: [] })
+    expect(extractExports(file)).toEqual({ exports: ['default', 'named'], reExports: [] })
+  })
+
+  it('tracks export default class', () => {
+    const file = writeTempFile('export default class App {}\n')
+    expect(extractExports(file)).toEqual({ exports: ['default'], reExports: [] })
+  })
+
+  it('tracks export default expression', () => {
+    const file = writeTempFile('export default 42\n')
+    expect(extractExports(file)).toEqual({ exports: ['default'], reExports: [] })
   })
 
   it('ignores comments that look like exports', () => {
@@ -79,7 +89,7 @@ describe('extractExports', () => {
     ].join('\n')
     const file = writeTempFile(source)
     const result = extractExports(file)
-    expect(result).toEqual({ exports: ['VERSION', 'scan', 'Scanner', 'init', 'internal', 'helper'], reExports: [] })
+    expect(result).toEqual({ exports: ['VERSION', 'scan', 'Scanner', 'init', 'internal', 'helper', 'default'], reExports: [] })
   })
 
   it('returns empty result for file with no exports', () => {

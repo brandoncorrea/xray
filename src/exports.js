@@ -39,6 +39,8 @@ export function extractExports(filePath) {
         const name = spec.exported.name || spec.exported.value
         exports.push(name)
       }
+    } else if (node.type === 'ExportDefaultDeclaration') {
+      exports.push('default')
     } else if (node.type === 'ExportAllDeclaration') {
       reExports.push(node.source.value)
     }

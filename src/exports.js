@@ -25,10 +25,11 @@ export function extractExports(filePath) {
       ecmaVersion: 'latest'
     })
   } catch {
-    return []
+    return { exports: [], reExports: [] }
   }
 
   const exports = []
+  const reExports = []
   for (const node of ast.body) {
     if (node.type === 'ExportNamedDeclaration') {
       if (node.declaration)
@@ -37,7 +38,9 @@ export function extractExports(filePath) {
         const name = spec.exported.name || spec.exported.value
         exports.push(name)
       }
+    } else if (node.type === 'ExportAllDeclaration') {
+      reExports.push(node.source.value)
     }
   }
-  return exports
+  return { exports, reExports }
 }

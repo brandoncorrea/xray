@@ -32,8 +32,10 @@ async function buildIndex(baseDir, config) {
 
   for (const file of Object.keys(graph)) {
     const absPath = join(baseDir, file)
+    const { exports, reExports } = extractExports(absPath)
     index[file] = {
-      exports: extractExports(absPath),
+      exports,
+      reExports,
       dependencies: graph[file],
       dependents: res.depends(file),
       tests: findTestFiles(file, baseDir),

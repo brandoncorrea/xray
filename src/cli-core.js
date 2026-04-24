@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 import { parseArgs } from './args.js'
 import { VERSION } from './index.js'
 import { filterIndex } from './filter.js'
+import output from './output.js'
 import { scan } from './scan.js'
 
 const HELP = `xray - dependency analysis tool
@@ -26,7 +27,7 @@ Options:
 export async function main(argv, { write = defaultWrite } = {}) {
   const args = parseArgs(argv)
   if (args.unknown.length) {
-    process.stderr.write(`Unknown flag${args.unknown.length > 1 ? 's' : ''}: ${args.unknown.join(', ')}\n`)
+    output.error(`Unknown flag${args.unknown.length > 1 ? 's' : ''}: ${args.unknown.join(', ')}\n`)
     return 1
   }
   if (args.help)

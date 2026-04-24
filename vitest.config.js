@@ -3,6 +3,7 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   test: {
     globals: false,
+    setupFiles: ['./tests/setup.js'],
     fileParallelism: true,
     testTimeout: 5000,
     coverage: {

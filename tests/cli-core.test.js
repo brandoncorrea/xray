@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
 import { rmSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { main } from '../src/cli-core.js'
+import output from '../src/output.js'
 import { setupFixture } from './helpers/fixtures.js'
 
 function captureOutput() {
@@ -238,28 +239,28 @@ describe('main', () => {
 
     it('rejects unknown flags with an error', async () => {
       const cap = captureOutput()
-      const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
+      const spy = vi.spyOn(output, 'error')
       try {
         const code = await main([root, '--bogus', '--compact'], { write: cap.write })
         expect(code).toBe(1)
-        expect(stderr).toHaveBeenCalled()
-        expect(stderr.mock.calls[0][0]).toContain('--bogus')
+        expect(spy).toHaveBeenCalled()
+        expect(spy.mock.calls[0][0]).toContain('--bogus')
       } finally {
-        stderr.mockRestore()
+        spy.mockRestore()
       }
     })
 
     it('rejects multiple unknown flags listing all of them', async () => {
       const cap = captureOutput()
-      const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
+      const spy = vi.spyOn(output, 'error')
       try {
         const code = await main([root, '--bogus', '--nope'], { write: cap.write })
         expect(code).toBe(1)
-        const msg = stderr.mock.calls[0][0]
+        const msg = spy.mock.calls[0][0]
         expect(msg).toContain('--bogus')
         expect(msg).toContain('--nope')
       } finally {
-        stderr.mockRestore()
+        spy.mockRestore()
       }
     })
   })

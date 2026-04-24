@@ -1,5 +1,6 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import { extractExports } from '../src/exports.js'
+import output from '../src/output.js'
 import { writeFileSync, mkdtempSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
@@ -133,17 +134,17 @@ describe('extractExports', () => {
     expect(extractExports(file)).toEqual({ exports: [], reExports: [] })
   })
 
-  it('writes a warning to stderr when parsing fails', () => {
+  it('writes a warning when parsing fails', () => {
     const file = writeTempFile('export const = ;; {{{')
-    const stderrWrite = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
+    const spy = vi.spyOn(output, 'error')
     try {
       extractExports(file)
-      expect(stderrWrite).toHaveBeenCalledOnce()
-      const msg = stderrWrite.mock.calls[0][0]
+      expect(spy).toHaveBeenCalledOnce()
+      const msg = spy.mock.calls[0][0]
       expect(msg).toContain('xray: warning:')
       expect(msg).toContain(file)
     } finally {
-      stderrWrite.mockRestore()
+      spy.mockRestore()
     }
   })
 

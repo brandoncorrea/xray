@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { Parser } from 'acorn'
 import acornJsx from 'acorn-jsx'
+import output from './output.js'
 
 const JSX_EXTENSIONS = ['.jsx', '.tsx']
 const jsxParser = Parser.extend(acornJsx())
@@ -21,7 +22,7 @@ function loadAstBody(filePath) {
   try {
     return parseAstBody(filePath)
   } catch (err) {
-    process.stderr.write(`xray: warning: failed to parse ${filePath}: ${err.message}\n`)
+    output.error(`xray: warning: failed to parse ${filePath}: ${err.message}\n`)
     return []
   }
 }

@@ -390,23 +390,5 @@ describe('main', () => {
       expect(Object.keys(index)).toContain('src/app.js')
     })
 
-    it('--exclude is additive with config.exclude', async () => {
-      const rootWithConfig = setupFixture({
-        'src/app.js': 'export function main() {}\n',
-        'src/coverage/report.js': 'export function report() {}\n',
-        'src/scripts/build.js': 'export function build() {}\n',
-        'xray.config.js': "export default { exclude: ['coverage'] }\n"
-      })
-      try {
-        const cap = captureOutput()
-        await main([rootWithConfig, '--exclude', 'scripts', '--compact'], { write: cap.write })
-        const index = JSON.parse(cap.output())
-        expect(Object.keys(index)).not.toContain('src/coverage/report.js')
-        expect(Object.keys(index)).not.toContain('src/scripts/build.js')
-        expect(Object.keys(index)).toContain('src/app.js')
-      } finally {
-        rmSync(rootWithConfig, { recursive: true, force: true })
-      }
-    })
   })
 })

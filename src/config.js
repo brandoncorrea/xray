@@ -1,7 +1,6 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-
 import { DEFAULT_TEST_PATTERNS } from './testFiles.js'
 
 export const DEFAULTS = {
@@ -9,12 +8,6 @@ export const DEFAULTS = {
   exclude: [],
   include: [],
   testPatterns: DEFAULT_TEST_PATTERNS
-}
-
-async function buildUserConfig(configPath) {
-  const url = pathToFileURL(configPath).href
-  const mod = await import(url)
-  return mod.default || {}
 }
 
 export async function loadConfig(dir) {
@@ -25,4 +18,10 @@ export async function loadConfig(dir) {
   const userConfig = await buildUserConfig(configPath)
 
   return { ...DEFAULTS, ...userConfig }
+}
+
+async function buildUserConfig(configPath) {
+  const url = pathToFileURL(configPath).href
+  const mod = await import(url)
+  return mod.default || {}
 }

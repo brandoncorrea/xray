@@ -8,6 +8,31 @@ export const DEFAULT_TEST_PATTERNS = [
   'spec/**/*.{js,jsx,ts,tsx}'
 ]
 
+export function findTestFiles(sourceFile, projectRoot, testPatterns) {
+  const patterns = testPatterns || DEFAULT_TEST_PATTERNS
+  const ext = extname(sourceFile)
+  const sourceName = basename(sourceFile, ext)
+  const sourceDir = dirname(sourceFile)
+
+  const candidates = new Set()
+  for (const pattern of patterns)
+    for (const candidate of candidatesFromPattern(pattern, sourceName, sourceDir))
+      if (isRelatedTestFile(candidate, sourceFile, projectRoot))
+        candidates.add(candidate)
+
+  return [...candidates].sort()
+}
+
+function candidatesFromPattern(pattern, sourceName, sourceDir) {
+  const resolvedPattern = resolvePattern(pattern, sourceDir)
+  return expandBraces(withSourceName(resolvedPattern, sourceName))
+}
+
+function isRelatedTestFile(candidate, sourceFile, projectRoot) {
+  return candidate !== sourceFile
+    && existsSync(join(projectRoot, candidate))
+}
+
 function expandBraces(str) {
   const match = str.match(/^(.*?)\{([^}]+)\}(.*)$/)
   if (!match) return [str]
@@ -15,53 +40,41 @@ function expandBraces(str) {
   return alternatives.split(',').flatMap(alt => expandBraces(prefix + alt + suffix))
 }
 
-function mirrorDir(sourceDir) {
-  if (sourceDir === 'src') return ''
-  if (sourceDir.startsWith('src/')) return sourceDir.slice(4)
-  return sourceDir
-}
-
-function candidatesFromPattern(pattern, name, sourceDir) {
-  const parts = pattern.split('**/')
-
-  let resolved
-  if (parts.length === 1) {
-    resolved = pattern
-  } else if (parts[0] === '') {
-    // Pattern starts with ** → co-located, use sourceDir as-is
-    resolved = sourceDir + '/' + parts.slice(1).join('/')
-  } else {
-    // Pattern has a prefix before ** → mirror, strip src/
-    const prefix = parts[0]
-    const suffix = parts.slice(1).join('/')
-    const mirror = mirrorDir(sourceDir)
-    resolved = mirror
-      ? prefix + mirror + '/' + suffix
-      : prefix + suffix
-  }
-
+function withSourceName(resolvedPattern, sourceName) {
   // Replace the first * in the filename with the source name
-  const segs = resolved.split('/')
-  segs[segs.length - 1] = segs[segs.length - 1].replace('*', name)
-  resolved = segs.join('/')
-
-  return expandBraces(resolved)
+  const segments = resolvedPattern.split('/')
+  const lastIdx = segments.length - 1
+  segments[lastIdx] = segments[lastIdx].replace('*', sourceName)
+  return segments.join('/')
 }
 
-export function findTestFiles(sourceFile, projectRoot, testPatterns) {
-  const patterns = testPatterns || DEFAULT_TEST_PATTERNS
-  const ext = extname(sourceFile)
-  const name = basename(sourceFile, ext)
-  const dir = dirname(sourceFile)
+function resolvePattern(pattern, sourceDir) {
+  const parts = pattern.split('**/')
+  if (parts.length === 1)
+    return pattern
+  else if (parts[0] === '')
+    return resolveColocatedPattern(parts, sourceDir)
+  else
+    return resolveMirrorPattern(parts, sourceDir)
+}
 
-  const candidates = new Set()
-  for (const pattern of patterns) {
-    for (const candidate of candidatesFromPattern(pattern, name, dir)) {
-      if (candidate !== sourceFile && existsSync(join(projectRoot, candidate))) {
-        candidates.add(candidate)
-      }
-    }
-  }
+function resolveColocatedPattern(parts, sourceDir) {
+  // Pattern starts with ** → co-located, use sourceDir as-is
+  return sourceDir + '/' + parts.slice(1).join('/')
+}
 
-  return [...candidates].sort()
+function resolveMirrorPattern(parts, sourceDir) {
+  // Pattern has a prefix before ** → mirror, strip src/
+  const prefix = parts[0]
+  const suffix = parts.slice(1).join('/')
+  const mirror = mirrorDir(sourceDir)
+  return mirror
+    ? prefix + mirror + '/' + suffix
+    : prefix + suffix
+}
+
+function mirrorDir(sourceDir) {
+  return sourceDir === 'src' ? ''
+    : sourceDir.startsWith('src/') ? sourceDir.slice(4)
+    : sourceDir
 }

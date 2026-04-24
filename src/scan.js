@@ -5,20 +5,13 @@ import { extractExports } from './exports.js'
 import { findTestFiles } from './testFiles.js'
 import { loadConfig } from './config.js'
 
-function getLineCount(path) {
-  const content = readFileSync(path, 'utf-8')
-  if (content === '') return 0
-  const lines = content.split('\n')
-  return content.endsWith('\n') ? lines.length - 1 : lines.length
-}
-
-function toExcludeRegExp(exclusion) {
-  return new RegExp(`(^|/)${exclusion}/`)
-}
-
-function scanTarget(baseDir, include) {
-  if (!include.length) return baseDir
-  return include.map(d => join(baseDir, d))
+export async function scan(directory, options = {}) {
+  const config = await loadConfig(directory)
+  if (options.include?.length)
+    config.include = options.include
+  if (options.exclude?.length)
+    config.exclude = distinctConcat(config.exclude, options.exclude)
+  return buildIndex(directory, config)
 }
 
 async function buildIndex(baseDir, config) {
@@ -50,11 +43,18 @@ function distinctConcat(coll1, coll2) {
   return [...new Set([...coll1, ...coll2])]
 }
 
-export async function scan(directory, options = {}) {
-  const config = await loadConfig(directory)
-  if (options.include?.length)
-    config.include = options.include
-  if (options.exclude?.length)
-    config.exclude = distinctConcat(config.exclude, options.exclude)
-  return buildIndex(directory, config)
+function toExcludeRegExp(exclusion) {
+  return new RegExp(`(^|/)${exclusion}/`)
+}
+
+function scanTarget(baseDir, include) {
+  if (!include.length) return baseDir
+  return include.map(d => join(baseDir, d))
+}
+
+function getLineCount(path) {
+  const content = readFileSync(path, 'utf-8')
+  if (!content) return 0
+  const lines = content.split('\n')
+  return content.endsWith('\n') ? lines.length - 1 : lines.length
 }

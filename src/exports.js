@@ -2,7 +2,35 @@ import { readFileSync } from 'node:fs'
 import { Parser } from 'acorn'
 import acornJsx from 'acorn-jsx'
 
+const JSX_EXTENSIONS = ['.jsx', '.tsx']
 const jsxParser = Parser.extend(acornJsx())
+const PARSER_OPTIONS = {
+  sourceType: 'module',
+  ecmaVersion: 'latest'
+}
+
+export function extractExports(filePath) {
+  const ast = loadAstBody(filePath)
+  const result = { exports: [], reExports: [] }
+  for (const node of ast)
+    collectExports(result, node)
+  return result
+}
+
+function loadAstBody(filePath) {
+  try {
+    return parseAstBody(filePath)
+  } catch (err) {
+    process.stderr.write(`xray: warning: failed to parse ${filePath}: ${err.message}\n`)
+    return []
+  }
+}
+
+function parseAstBody(filePath) {
+  const source = readFileSync(filePath, 'utf-8')
+  const parser = isJsx(filePath) ? jsxParser : Parser
+  return parser.parse(source, PARSER_OPTIONS).body
+}
 
 function nameFromDeclaration({ type, declarations, id }) {
   if (type === 'VariableDeclaration')
@@ -11,39 +39,22 @@ function nameFromDeclaration({ type, declarations, id }) {
 }
 
 function isJsx(path) {
-  return path.endsWith('.jsx') || path.endsWith('.tsx')
+  return JSX_EXTENSIONS.some(ext => path.endsWith(ext))
 }
 
-export function extractExports(filePath) {
-  const source = readFileSync(filePath, 'utf-8')
-  const parser = isJsx(filePath) ? jsxParser : Parser
+function collectExports(result, node) {
+  const { type, source } = node
+  if (type === 'ExportNamedDeclaration')
+    collectNamedExports(result, node)
+  else if (type === 'ExportDefaultDeclaration')
+    result.exports.push('default')
+  else if (type === 'ExportAllDeclaration')
+    result.reExports.push(source.value)
+}
 
-  let ast
-  try {
-    ast = parser.parse(source, {
-      sourceType: 'module',
-      ecmaVersion: 'latest'
-    })
-  } catch (err) {
-    process.stderr.write(`xray: warning: failed to parse ${filePath}: ${err.message}\n`)
-    return { exports: [], reExports: [] }
-  }
-
-  const exports = []
-  const reExports = []
-  for (const node of ast.body) {
-    if (node.type === 'ExportNamedDeclaration') {
-      if (node.declaration)
-        exports.push(...nameFromDeclaration(node.declaration))
-      for (const spec of node.specifiers) {
-        const name = spec.exported.name || spec.exported.value
-        exports.push(name)
-      }
-    } else if (node.type === 'ExportDefaultDeclaration') {
-      exports.push('default')
-    } else if (node.type === 'ExportAllDeclaration') {
-      reExports.push(node.source.value)
-    }
-  }
-  return { exports, reExports }
+function collectNamedExports(result, { declaration, specifiers }) {
+  if (declaration)
+    result.exports.push(...nameFromDeclaration(declaration))
+  for (const { exported } of specifiers)
+    result.exports.push(exported.name || exported.value)
 }

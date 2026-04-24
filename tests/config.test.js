@@ -27,7 +27,7 @@ export default {
       const config = await loadConfig(dir)
       expect(config.extensions).toEqual(['.js', '.jsx'])
       expect(config.exclude).toEqual(['coverage/'])
-      expect(config.testPatterns).toEqual(DEFAULTS.testPatterns)
+      expect(config.testPatterns).toBeUndefined()
     } finally {
       rmSync(dir, { recursive: true })
     }
@@ -67,13 +67,12 @@ export default {
     try {
       writeFileSync(join(dir, 'xray.config.js'), `
 export default {
-  testPatterns: ['spec/**/*.spec.*'],
+  extensions: ['.ts', '.tsx'],
 }
 `)
       const config = await loadConfig(dir)
-      expect(config.extensions).toEqual(DEFAULTS.extensions)
+      expect(config.extensions).toEqual(['.ts', '.tsx'])
       expect(config.exclude).toEqual(DEFAULTS.exclude)
-      expect(config.testPatterns).toEqual(['spec/**/*.spec.*'])
     } finally {
       rmSync(dir, { recursive: true })
     }

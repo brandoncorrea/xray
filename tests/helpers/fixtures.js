@@ -1,6 +1,7 @@
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
+import graph, { createMemoryGraph } from '../../src/graph.js'
 
 function parseImports(content, filePath) {
   const imports = []
@@ -15,16 +16,16 @@ function parseImports(content, filePath) {
 
 export function setupFixture(files) {
   const root = mkdtempSync(join(tmpdir(), 'xray-test-'))
-  const graph = {}
+  const raw = {}
 
   for (const [filePath, content] of Object.entries(files)) {
     const full = join(root, filePath)
     mkdirSync(join(full, '..'), { recursive: true })
     writeFileSync(full, content)
-    graph[filePath] = parseImports(content, filePath)
+    raw[filePath] = parseImports(content, filePath)
   }
 
-  const buildGraph = async () => graph
+  graph.configure(createMemoryGraph(raw))
 
-  return { root, buildGraph }
+  return root
 }

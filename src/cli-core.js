@@ -24,7 +24,7 @@ Options:
   --help, -h                Show this help message
   --version, -v             Show version`
 
-export async function main(argv, { write = defaultWrite, buildGraph } = {}) {
+export async function main(argv, { write = defaultWrite } = {}) {
   const args = parseArgs(argv)
   if (args.unknown.length) {
     output.error(`Unknown flag${args.unknown.length > 1 ? 's' : ''}: ${args.unknown.join(', ')}\n`)
@@ -35,15 +35,14 @@ export async function main(argv, { write = defaultWrite, buildGraph } = {}) {
   else if (args.version)
     write(VERSION + '\n')
   else
-    await doScan(args, write, buildGraph)
+    await doScan(args, write)
   return 0
 }
 
-async function doScan(args, write, buildGraph) {
+async function doScan(args, write) {
   const options = {
     exclude: args.exclude,
-    include: args.include,
-    buildGraph
+    include: args.include
   }
   const index = await scan(resolve(args.dir || '.'), options)
   const result = filterIndex(args, index)

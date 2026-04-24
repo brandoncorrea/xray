@@ -12,8 +12,7 @@ describe('scan', () => {
   })
 
   it('produces full index for a directory with interconnected files', async () => {
-    let buildGraph
-    ;({ root, buildGraph } = setupFixture({
+    root = setupFixture({
       'src/math.js': [
         'export function add(a, b) { return a + b; }',
         'export function subtract(a, b) { return a - b; }'
@@ -29,9 +28,9 @@ describe('scan', () => {
       ].join('\n'),
       'tests/math.test.js': '// test for math\n',
       'tests/calc.test.js': '// test for calc\n'
-    }))
+    })
 
-    const result = await scan(root, { buildGraph })
+    const result = await scan(root)
 
     expect(Object.keys(result).sort()).toEqual([
       'src/calc.js',
@@ -64,18 +63,16 @@ describe('scan', () => {
   })
 
   it('returns empty object for directory with no JS files', async () => {
-    let buildGraph
-    ;({ root, buildGraph } = setupFixture({
+    root = setupFixture({
       'README.md': '# hello\n'
-    }))
+    })
 
-    const result = await scan(root, { buildGraph })
+    const result = await scan(root)
     expect(result).toEqual({})
   })
 
   it('normalizes paths that escape the scan root', async () => {
-    let buildGraph
-    ;({ root, buildGraph } = setupFixture({
+    root = setupFixture({
       'src/app.js': [
         "import { env } from '../shared/env.js'",
         'export function start() { return env }'
@@ -83,17 +80,16 @@ describe('scan', () => {
       'shared/env.js': [
         'export const env = "production"'
       ].join('\n')
-    }))
+    })
 
-    const result = await scan(root, { buildGraph })
+    const result = await scan(root)
 
     // External dep should appear as clean path relative to project root
     expect(result['src/app.js'].dependencies).toEqual(['shared/env.js'])
   })
 
   it('scans .jsx files with correct exports and dependencies', async () => {
-    let buildGraph
-    ;({ root, buildGraph } = setupFixture({
+    root = setupFixture({
       'src/App.jsx': [
         "import { Button } from './components/Button.jsx'",
         'export function App() { return <Button /> }'
@@ -102,9 +98,9 @@ describe('scan', () => {
         'export function Button() { return <button>Click</button>; }'
       ].join('\n'),
       'tests/components/Button.test.jsx': '// test\n'
-    }))
+    })
 
-    const result = await scan(root, { buildGraph })
+    const result = await scan(root)
 
     expect(Object.keys(result).sort()).toEqual([
       'src/App.jsx',
@@ -121,62 +117,57 @@ describe('scan', () => {
   })
 
   it('reports zero lines for empty file', async () => {
-    let buildGraph
-    ;({ root, buildGraph } = setupFixture({
+    root = setupFixture({
       'src/empty.js': ''
-    }))
+    })
 
-    const result = await scan(root, { buildGraph })
+    const result = await scan(root)
     expect(result['src/empty.js'].lines).toBe(0)
   })
 
   it('handles file with no exports', async () => {
-    let buildGraph
-    ;({ root, buildGraph } = setupFixture({
+    root = setupFixture({
       'src/side-effect.js': "console.log('init')\n"
-    }))
+    })
 
-    const result = await scan(root, { buildGraph })
+    const result = await scan(root)
     expect(result['src/side-effect.js'].exports).toEqual([])
     expect(result['src/side-effect.js'].lines).toBe(1)
   })
 
   it('excludes directories matching exclude patterns', async () => {
-    let buildGraph
-    ;({ root, buildGraph } = setupFixture({
+    root = setupFixture({
       'src/app.js': 'export function main() {}\n',
       'src/coverage/report.js': 'export function report() {}\n',
       'src/scripts/build.js': 'export function build() {}\n'
-    }))
+    })
 
-    const result = await scan(root, { exclude: ['coverage'], buildGraph })
+    const result = await scan(root, { exclude: ['coverage'] })
     expect(Object.keys(result)).not.toContain('src/coverage/report.js')
     expect(Object.keys(result)).toContain('src/app.js')
     expect(Object.keys(result)).toContain('src/scripts/build.js')
   })
 
   it('excludes multiple directories', async () => {
-    let buildGraph
-    ;({ root, buildGraph } = setupFixture({
+    root = setupFixture({
       'src/app.js': 'export function main() {}\n',
       'src/coverage/report.js': 'export function report() {}\n',
       'src/scripts/build.js': 'export function build() {}\n'
-    }))
+    })
 
-    const result = await scan(root, { exclude: ['coverage', 'scripts'], buildGraph })
+    const result = await scan(root, { exclude: ['coverage', 'scripts'] })
     expect(Object.keys(result)).not.toContain('src/coverage/report.js')
     expect(Object.keys(result)).not.toContain('src/scripts/build.js')
     expect(Object.keys(result)).toContain('src/app.js')
   })
 
   it('includes all files when exclude is empty array', async () => {
-    let buildGraph
-    ;({ root, buildGraph } = setupFixture({
+    root = setupFixture({
       'src/app.js': 'export function main() {}\n',
       'src/vendor/lib.js': 'export function lib() {}\n'
-    }))
+    })
 
-    const result = await scan(root, { exclude: [], buildGraph })
+    const result = await scan(root, { exclude: [] })
     expect(Object.keys(result).sort()).toEqual([
       'src/app.js',
       'src/vendor/lib.js'
@@ -184,16 +175,15 @@ describe('scan', () => {
   })
 
   it('scans files without requiring a src/ directory', async () => {
-    let buildGraph
-    ;({ root, buildGraph } = setupFixture({
+    root = setupFixture({
       'lib/utils.js': 'export function helper() {}\n',
       'app.js': [
         "import { helper } from './lib/utils.js'",
         'export function main() { return helper() }'
       ].join('\n')
-    }))
+    })
 
-    const result = await scan(root, { buildGraph })
+    const result = await scan(root)
     expect(Object.keys(result).sort()).toEqual(['app.js', 'lib/utils.js'])
     expect(result['app.js'].exports).toEqual(['main'])
     expect(result['app.js'].dependencies).toEqual(['lib/utils.js'])
@@ -202,118 +192,109 @@ describe('scan', () => {
   })
 
   it('includes cross-boundary files in the index', async () => {
-    let buildGraph
-    ;({ root, buildGraph } = setupFixture({
+    root = setupFixture({
       'src/app.js': [
         "import { env } from '../shared/env.js'",
         'export function start() { return env }'
       ].join('\n'),
       'shared/env.js': 'export const env = "production"\n'
-    }))
+    })
 
-    const result = await scan(root, { buildGraph })
+    const result = await scan(root)
     expect(result['shared/env.js']).toBeDefined()
     expect(result['shared/env.js'].exports).toEqual(['env'])
     expect(result['shared/env.js'].dependents).toEqual(['src/app.js'])
   })
 
   it('scans only included directories when include is specified', async () => {
-    let buildGraph
-    ;({ root, buildGraph } = setupFixture({
+    root = setupFixture({
       'src/app.js': 'export function main() {}\n',
       'shared/utils.js': 'export function util() {}\n',
       'vendor/lib.js': 'export function lib() {}\n'
-    }))
+    })
 
-    const result = await scan(root, { include: ['src', 'shared'], buildGraph })
+    const result = await scan(root, { include: ['src', 'shared'] })
     expect(Object.keys(result).sort()).toEqual(['shared/utils.js', 'src/app.js'])
   })
 
   it('scans everything when include is empty', async () => {
-    let buildGraph
-    ;({ root, buildGraph } = setupFixture({
+    root = setupFixture({
       'src/app.js': 'export function main() {}\n',
       'lib/utils.js': 'export function util() {}\n'
-    }))
+    })
 
-    const result = await scan(root, { include: [], buildGraph })
+    const result = await scan(root, { include: [] })
     expect(Object.keys(result).sort()).toEqual(['lib/utils.js', 'src/app.js'])
   })
 
   it('include narrows then exclude removes from that set', async () => {
-    let buildGraph
-    ;({ root, buildGraph } = setupFixture({
+    root = setupFixture({
       'src/app.js': 'export function main() {}\n',
       'src/coverage/report.js': 'export function report() {}\n',
       'shared/utils.js': 'export function util() {}\n'
-    }))
+    })
 
-    const result = await scan(root, { include: ['src'], exclude: ['coverage'], buildGraph })
+    const result = await scan(root, { include: ['src'], exclude: ['coverage'] })
     expect(Object.keys(result)).toEqual(['src/app.js'])
   })
 
   it('CLI include overrides config include', async () => {
-    let buildGraph
-    ;({ root, buildGraph } = setupFixture({
+    root = setupFixture({
       'src/app.js': 'export function main() {}\n',
       'shared/utils.js': 'export function util() {}\n',
       'vendor/lib.js': 'export function lib() {}\n',
       'xray.config.js': "export default { include: ['src', 'shared'] }\n"
-    }))
+    })
 
-    const result = await scan(root, { include: ['vendor'], buildGraph })
+    const result = await scan(root, { include: ['vendor'] })
     expect(Object.keys(result)).toEqual(['vendor/lib.js'])
   })
 
   it('uses config include when no CLI include specified', async () => {
-    let buildGraph
-    ;({ root, buildGraph } = setupFixture({
+    root = setupFixture({
       'src/app.js': 'export function main() {}\n',
       'shared/utils.js': 'export function util() {}\n',
       'vendor/lib.js': 'export function lib() {}\n',
       'xray.config.js': "export default { include: ['src', 'shared'] }\n"
-    }))
+    })
 
-    const result = await scan(root, { buildGraph })
+    const result = await scan(root)
     expect(Object.keys(result).sort()).toEqual(['shared/utils.js', 'src/app.js'])
   })
 
   it('empty options.include does not override config include', async () => {
-    let buildGraph
-    ;({ root, buildGraph } = setupFixture({
+    root = setupFixture({
       'src/app.js': 'export function main() {}\n',
       'vendor/lib.js': 'export function lib() {}\n',
       'xray.config.js': "export default { include: ['src'] }\n"
-    }))
+    })
 
-    const result = await scan(root, { include: [], buildGraph })
+    const result = await scan(root, { include: [] })
     expect(Object.keys(result)).toEqual(['src/app.js'])
   })
 
   it('exclude pattern uses regex boundary — does not match partial directory names', async () => {
-    let buildGraph
-    ;({ root, buildGraph } = setupFixture({
+    root = setupFixture({
       'src/scripts/build.js': 'export function build() {}\n',
       'src/my-scripts/helper.js': 'export function helper() {}\n',
       'src/app.js': 'export function main() {}\n'
-    }))
+    })
 
-    const result = await scan(root, { exclude: ['scripts'], buildGraph })
+    const result = await scan(root, { exclude: ['scripts'] })
     expect(Object.keys(result)).not.toContain('src/scripts/build.js')
     expect(Object.keys(result)).toContain('src/my-scripts/helper.js')
     expect(Object.keys(result)).toContain('src/app.js')
   })
 
   it('merges CLI exclude with config exclude', async () => {
-    let buildGraph
-    ;({ root, buildGraph } = setupFixture({
+    root = setupFixture({
       'src/app.js': 'export function main() {}\n',
       'src/coverage/report.js': 'export function report() {}\n',
       'src/scripts/build.js': 'export function build() {}\n',
       'xray.config.js': "export default { exclude: ['coverage'] }\n"
-    }))
+    })
 
-    const result = await scan(root, { exclude: ['scripts'], buildGraph })
+    const result = await scan(root, { exclude: ['scripts'] })
     expect(Object.keys(result)).not.toContain('src/coverage/report.js')
     expect(Object.keys(result)).not.toContain('src/scripts/build.js')
     expect(Object.keys(result)).toContain('src/app.js')

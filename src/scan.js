@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { extractExports } from './exports.js'
 import { findTestFiles } from './testFiles.js'
 import { loadConfig } from './config.js'
-import { buildDependencyGraph, filterGraph } from './graph.js'
+import graph from './graph.js'
 
 export async function scan(directory, options = {}) {
   const config = await loadConfig(directory)
@@ -11,10 +11,8 @@ export async function scan(directory, options = {}) {
     config.include = options.include
   if (options.exclude?.length)
     config.exclude = distinctConcat(config.exclude, options.exclude)
-  const graph = options.buildGraph
-    ? filterGraph(await options.buildGraph(), config)
-    : await buildDependencyGraph(directory, config)
-  return buildIndex(directory, graph, config.testPatterns)
+  const g = await graph.analyze(directory, config)
+  return buildIndex(directory, g, config.testPatterns)
 }
 
 function buildIndex(baseDir, graph, testPatterns) {

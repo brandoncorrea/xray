@@ -1,31 +1,33 @@
 import { join } from 'node:path'
 
-export async function buildDependencyGraph(baseDir, config) {
-  const options = madgeOptions(baseDir, config)
-  const raw = await createMadgeObj(options)
-  return filterGraph(raw, config)
-}
-
-function madgeOptions(baseDir, config) {
+async function madgeAnalyze(baseDir, config) {
   const target = scanTarget(baseDir, config.include)
   const excludeRegExp = config.exclude.map(toExcludeRegExp)
   const fileExtensions = extensionList(config)
-  return { target, baseDir, fileExtensions, excludeRegExp }
-}
-
-async function createMadgeObj({ target, ...config }) {
   const { default: madge } = await import('madge')
-  const res = await madge(target, config)
-  return res.obj()
+  const res = await madge(target, { baseDir, fileExtensions, excludeRegExp })
+  return wrapGraph(compileGraph(res.obj(), config))
 }
 
-export function filterGraph(raw, config) {
-  const graph = compileGraph(raw, config)
-  const graphKeys = Object.keys(graph)
+export function createMemoryGraph(raw) {
   return {
-    files: () => graphKeys,
+    analyze: async (_baseDir, config) => wrapGraph(compileGraph(raw, config))
+  }
+}
+
+let impl = { analyze: madgeAnalyze }
+
+export default {
+  analyze: (baseDir, config) => impl.analyze(baseDir, config),
+  configure: newImpl => { impl = newImpl }
+}
+
+function wrapGraph(graph) {
+  const keys = Object.keys(graph)
+  return {
+    files: () => keys,
     dependencies: file => graph[file] || [],
-    dependents: file => graphKeys.filter(k => graph[k].includes(file))
+    dependents: file => keys.filter(k => graph[k].includes(file))
   }
 }
 

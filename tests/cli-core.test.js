@@ -219,11 +219,31 @@ describe('main', () => {
       JSON.parse(cap.output())
     })
 
-    it('ignores unknown flags and scans the directory', async () => {
+    it('rejects unknown flags with an error', async () => {
       const cap = captureOutput()
-      await main([root, '--bogus', '--compact'], { write: cap.write })
-      const index = JSON.parse(cap.output())
-      expect(index['src/math.js']).toBeDefined()
+      const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
+      try {
+        const code = await main([root, '--bogus', '--compact'], { write: cap.write })
+        expect(code).toBe(1)
+        expect(stderr).toHaveBeenCalled()
+        expect(stderr.mock.calls[0][0]).toContain('--bogus')
+      } finally {
+        stderr.mockRestore()
+      }
+    })
+
+    it('rejects multiple unknown flags listing all of them', async () => {
+      const cap = captureOutput()
+      const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
+      try {
+        const code = await main([root, '--bogus', '--nope'], { write: cap.write })
+        expect(code).toBe(1)
+        const msg = stderr.mock.calls[0][0]
+        expect(msg).toContain('--bogus')
+        expect(msg).toContain('--nope')
+      } finally {
+        stderr.mockRestore()
+      }
     })
   })
 

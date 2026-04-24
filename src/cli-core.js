@@ -19,7 +19,7 @@ Options:
   --version, -v             Show version`
 
 function parseArgs(argv) {
-  const parsed = { exclude: [], include: [] }
+  const parsed = { exclude: [], include: [], unknown: [] }
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i]
     if (arg === '--help' || arg === '-h')
@@ -42,7 +42,9 @@ function parseArgs(argv) {
       parsed.compact = true
     else if (arg === '--pretty')
       parsed.pretty = true
-    else if (!arg.startsWith('-'))
+    else if (arg.startsWith('-'))
+      parsed.unknown.push(arg)
+    else
       parsed.dir = arg
   }
   return parsed
@@ -109,6 +111,10 @@ async function getVersion() {
 
 export async function main(argv, { write = defaultWrite } = {}) {
   const args = parseArgs(argv)
+  if (args.unknown.length > 0) {
+    process.stderr.write(`Unknown flag${args.unknown.length > 1 ? 's' : ''}: ${args.unknown.join(', ')}\n`)
+    return 1
+  }
   if (args.help)
     write(HELP + '\n')
   else if (args.version)

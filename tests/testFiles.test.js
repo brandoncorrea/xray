@@ -200,4 +200,14 @@ describe('findTestFiles', () => {
     const result = findTestFiles('lib/utils.js', root)
     expect(result).toEqual(['spec/lib/utils.js'])
   })
+
+  it('handles pattern without **/ (literal path with wildcard name)', () => {
+    root = setupTempProject([
+      'src/handlers/feed.js',
+      'tests/feed.test.js'
+    ])
+    const patterns = ['tests/*.test.js']
+    const result = findTestFiles('src/handlers/feed.js', root, patterns)
+    expect(result).toEqual(['tests/feed.test.js'])
+  })
 })

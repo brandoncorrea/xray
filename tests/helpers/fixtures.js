@@ -13,13 +13,6 @@ function parseImports(content, filePath) {
   return imports
 }
 
-function createGraphResult(graph) {
-  return {
-    obj: () => graph,
-    depends: (file) => Object.keys(graph).filter(k => graph[k].includes(file))
-  }
-}
-
 export function setupFixture(files) {
   const root = mkdtempSync(join(tmpdir(), 'xray-test-'))
   const graph = {}
@@ -31,7 +24,7 @@ export function setupFixture(files) {
     graph[filePath] = parseImports(content, filePath)
   }
 
-  const buildGraph = async () => createGraphResult(graph)
+  const buildGraph = async () => graph
 
   return { root, buildGraph }
 }

@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { extractExports } from './exports.js'
 import { findTestFiles } from './testFiles.js'
 import { loadConfig } from './config.js'
+import { buildDependencyGraph, filterGraph } from './graph.js'
 
 export async function scan(directory, options = {}) {
   const config = await loadConfig(directory)
@@ -10,64 +11,31 @@ export async function scan(directory, options = {}) {
     config.include = options.include
   if (options.exclude?.length)
     config.exclude = distinctConcat(config.exclude, options.exclude)
-  return buildIndex(directory, config, options.buildGraph)
+  const graph = options.buildGraph
+    ? filterGraph(await options.buildGraph(), config)
+    : await buildDependencyGraph(directory, config)
+  return buildIndex(directory, graph, config.testPatterns)
 }
 
-async function madgeBuildGraph(target, opts) {
-  const { default: madge } = await import('madge')
-  return madge(target, opts)
-}
-
-async function buildIndex(baseDir, config, buildGraph) {
-  const excludeRegExp = config.exclude.map(toExcludeRegExp)
-  const fileExtensions = config.extensions.map(e => e.replace(/^\./, ''))
-  const madgeOpts = { baseDir, fileExtensions, excludeRegExp }
-  const target = scanTarget(baseDir, config.include)
-  const res = buildGraph
-    ? await buildGraph()
-    : await madgeBuildGraph(target, madgeOpts)
-  const graph = res.obj()
+function buildIndex(baseDir, graph, testPatterns) {
   const index = {}
-
-  for (const file of Object.keys(graph)) {
-    if (!hasExtension(file, fileExtensions)) continue
-    if (excludeRegExp.some(re => re.test(file))) continue
-    if (!matchesInclude(file, config.include)) continue
+  for (const file of graph.files()) {
     const absPath = join(baseDir, file)
     const { exports, reExports } = extractExports(absPath)
     index[file] = {
       exports,
       reExports,
-      dependencies: graph[file],
-      dependents: res.depends(file),
-      tests: findTestFiles(file, baseDir, config.testPatterns),
+      dependencies: graph.dependencies(file),
+      dependents: graph.dependents(file),
+      tests: findTestFiles(file, baseDir, testPatterns),
       lines: getLineCount(absPath)
     }
   }
-
   return index
 }
 
 function distinctConcat(coll1, coll2) {
   return [...new Set([...coll1, ...coll2])]
-}
-
-function hasExtension(file, extensions) {
-  return extensions.some(ext => file.endsWith('.' + ext))
-}
-
-function matchesInclude(file, include) {
-  if (!include.length) return true
-  return include.some(dir => file.startsWith(dir + '/') || file === dir)
-}
-
-function toExcludeRegExp(exclusion) {
-  return new RegExp(`(^|/)${exclusion}/`)
-}
-
-function scanTarget(baseDir, include) {
-  if (!include.length) return baseDir
-  return include.map(d => join(baseDir, d))
 }
 
 function getLineCount(path) {

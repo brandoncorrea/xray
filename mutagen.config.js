@@ -1,8 +1,7 @@
-import { javascript } from '@bwawan/mutagen/mutators'
-import { createVitestRunner } from '@bwawan/mutagen'
+import { createVitestRunner, mutators } from '@bwawan/mutagen'
 
 export default {
-  mutators: javascript,
+  mutators: mutators.javascript,
   include: ['src/**/*.js'],
   testInclude: ['tests/**/*.test.js'],
   createRunner: (sourceFile, opts = {}) => createVitestRunner(sourceFile, {

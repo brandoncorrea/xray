@@ -2,11 +2,9 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { extractExports } from './exports.js'
 import { findTestFiles } from './testFiles.js'
-import { loadConfig } from './config.js'
 import { buildGraph } from './graph.js'
 
-export async function scan(directory, options = {}, config) {
-  if (!config) config = await loadConfig(directory)
+export function scan(directory, options, config) {
   if (options.include?.length)
     config.include = options.include
   if (options.exclude?.length)

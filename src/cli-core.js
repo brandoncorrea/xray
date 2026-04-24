@@ -4,6 +4,7 @@ import { parseArgs } from './args.js'
 import { VERSION } from './index.js'
 import { filterIndex } from './filter.js'
 import output from './output.js'
+import { loadConfig } from './config.js'
 import { scan } from './scan.js'
 
 const HELP = `xray - dependency analysis tool
@@ -40,11 +41,13 @@ export async function main(argv, { write = defaultWrite } = {}) {
 }
 
 async function doScan(args, write) {
+  const directory = resolve(args.dir || '.')
+  const config = await loadConfig(directory)
   const options = {
     exclude: args.exclude,
     include: args.include
   }
-  const index = await scan(resolve(args.dir || '.'), options)
+  const index = scan(directory, options, config)
   const result = filterIndex(args, index)
   const data = args.filesOnly ? Object.keys(result).sort() : result
   writeOutput(data, args, write)

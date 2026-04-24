@@ -1,29 +1,48 @@
 import { join } from 'node:path'
 
 export async function buildDependencyGraph(baseDir, config) {
+  const options = madgeOptions(baseDir, config)
+  const raw = await createMadgeObj(options)
+  return filterGraph(raw, config)
+}
+
+function madgeOptions(baseDir, config) {
   const target = scanTarget(baseDir, config.include)
   const excludeRegExp = config.exclude.map(toExcludeRegExp)
   const fileExtensions = extensionList(config)
+  return { target, baseDir, fileExtensions, excludeRegExp }
+}
+
+async function createMadgeObj({ target, ...config }) {
   const { default: madge } = await import('madge')
-  const res = await madge(target, { baseDir, fileExtensions, excludeRegExp })
-  return filterGraph(res.obj(), config)
+  const res = await madge(target, config)
+  return res.obj()
 }
 
 export function filterGraph(raw, config) {
+  const graph = compileGraph(raw, config)
+  const graphKeys = Object.keys(graph)
+  return {
+    files: () => graphKeys,
+    dependencies: file => graph[file] || [],
+    dependents: file => graphKeys.filter(k => graph[k].includes(file))
+  }
+}
+
+function compileGraph(raw, config) {
   const fileExtensions = extensionList(config)
   const excludeRegExp = config.exclude.map(toExcludeRegExp)
   const graph = {}
-  for (const file of Object.keys(raw)) {
-    if (!hasExtension(file, fileExtensions)) continue
-    if (excludeRegExp.some(re => re.test(file))) continue
-    if (!matchesInclude(file, config.include)) continue
-    graph[file] = raw[file]
-  }
-  return {
-    files: () => Object.keys(graph),
-    dependencies: (file) => graph[file] || [],
-    dependents: (file) => Object.keys(graph).filter(k => graph[k].includes(file))
-  }
+  for (const file of Object.keys(raw))
+    if (shouldIncludeFile(file, fileExtensions, excludeRegExp, config))
+      graph[file] = raw[file]
+  return graph
+}
+
+function shouldIncludeFile(file, fileExtensions, excludeRegExp, config) {
+  return hasExtension(file, fileExtensions)
+    && !excludeRegExp.some(re => re.test(file))
+    && matchesInclude(file, config.include)
 }
 
 function extensionList(config) {
@@ -35,8 +54,8 @@ function hasExtension(file, extensions) {
 }
 
 function matchesInclude(file, include) {
-  if (!include.length) return true
-  return include.some(dir => file.startsWith(dir + '/') || file === dir)
+  return !include.length
+    || include.some(dir => file.startsWith(dir + '/') || file === dir)
 }
 
 function toExcludeRegExp(exclusion) {

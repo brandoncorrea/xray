@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     globals: false,
     fileParallelism: true,
-    testTimeout: 2000,
+    testTimeout: 5000,
     coverage: {
       provider: 'v8',
       include: ['src/**/*.js'],

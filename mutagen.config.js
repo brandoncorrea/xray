@@ -1,5 +1,5 @@
-import { javascript } from 'mutagen/mutators'
-import { createVitestRunner } from 'mutagen'
+import { javascript } from '@bwawan/mutagen/mutators'
+import { createVitestRunner } from '@bwawan/mutagen'
 
 export default {
   mutators: javascript,

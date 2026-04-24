@@ -8,11 +8,14 @@ const jsxParser = Parser.extend(acornJsx())
 const PARSER_OPTIONS = { sourceType: 'module', ecmaVersion: 'latest' }
 
 export function buildGraph(baseDir, config) {
-  const files = discoverFiles(baseDir, config)
+  return wrapGraph(compileSources(baseDir, config))
+}
+
+function compileSources(baseDir, config) {
   const graph = {}
-  for (const file of files)
+  for (const file of discoverFiles(baseDir, config))
     graph[file] = extractImports(join(baseDir, file), baseDir)
-  return wrapGraph(graph)
+  return graph
 }
 
 function wrapGraph(graph) {
@@ -26,23 +29,39 @@ function wrapGraph(graph) {
 
 function discoverFiles(baseDir, config) {
   const excludeRegExp = config.exclude.map(toExcludeRegExp)
+  return walk(baseDir, '', config.extensions, excludeRegExp, config.include)
+}
+
+function walk(baseDir, relDir, extensions, excludeRegExp, include) {
   const files = []
-  walk(baseDir, '', config.extensions, excludeRegExp, config.include, files)
+  for (const entry of fileEntries(baseDir, relDir)) {
+    const relPath = toRelativePath(relDir, entry.name)
+    if (entry.isDirectory()) {
+      if (isIncludedDirectory(entry, excludeRegExp, relPath))
+        files.push(...walk(baseDir, relPath, extensions, excludeRegExp, include))
+    } else if (isIncludedFile(relPath, extensions, excludeRegExp, include)) {
+      files.push(relPath)
+    }
+  }
   return files
 }
 
-function walk(baseDir, relDir, extensions, excludeRegExp, include, result) {
-  const absDir = relDir ? join(baseDir, relDir) : baseDir
-  for (const entry of readdirSync(absDir, { withFileTypes: true })) {
-    const relPath = relDir ? relDir + '/' + entry.name : entry.name
-    if (entry.isDirectory()) {
-      if (entry.name === 'node_modules') continue
-      if (excludeRegExp.some(re => re.test(relPath + '/'))) continue
-      walk(baseDir, relPath, extensions, excludeRegExp, include, result)
-    } else if (isIncludedFile(relPath, extensions, excludeRegExp, include)) {
-      result.push(relPath)
-    }
-  }
+function fileEntries(baseDir, relDir) {
+  const absDir = toAbsoluteDirectory(baseDir, relDir)
+  return readdirSync(absDir, { withFileTypes: true })
+}
+
+function toAbsoluteDirectory(baseDir, relDir) {
+  return relDir ? join(baseDir, relDir) : baseDir
+}
+
+function toRelativePath(relDir, entryName) {
+  return relDir ? relDir + '/' + entryName : entryName
+}
+
+function isIncludedDirectory(entry, excludeRegExp, relPath) {
+  return entry.name !== 'node_modules'
+    && !excludeRegExp.some(re => re.test(relPath + '/'))
 }
 
 function isIncludedFile(relPath, extensions, excludeRegExp, include) {
@@ -93,7 +112,6 @@ function parseFile(absPath) {
     const parser = isJsx(absPath) ? jsxParser : Parser
     return parser.parse(source, PARSER_OPTIONS).body
   } catch {
-    return null
   }
 }
 

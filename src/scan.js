@@ -5,8 +5,8 @@ import { findTestFiles } from './testFiles.js'
 import { loadConfig } from './config.js'
 import { buildGraph } from './graph.js'
 
-export async function scan(directory, options = {}) {
-  const config = await loadConfig(directory)
+export async function scan(directory, options = {}, config) {
+  if (!config) config = await loadConfig(directory)
   if (options.include?.length)
     config.include = options.include
   if (options.exclude?.length)

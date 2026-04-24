@@ -2,10 +2,13 @@ import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
+import { DEFAULT_TEST_PATTERNS } from './testFiles.js'
+
 export const DEFAULTS = {
   extensions: ['.js', '.jsx'],
   exclude: [],
-  include: []
+  include: [],
+  testPatterns: DEFAULT_TEST_PATTERNS
 }
 
 async function buildUserConfig(configPath) {

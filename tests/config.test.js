@@ -27,7 +27,7 @@ export default {
       const config = await loadConfig(dir)
       expect(config.extensions).toEqual(['.js', '.jsx'])
       expect(config.exclude).toEqual(['coverage/'])
-      expect(config.testPatterns).toBeUndefined()
+      expect(config.testPatterns).toEqual(DEFAULTS.testPatterns)
     } finally {
       rmSync(dir, { recursive: true })
     }

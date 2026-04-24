@@ -38,7 +38,7 @@ async function buildIndex(baseDir, config) {
       reExports,
       dependencies: graph[file],
       dependents: res.depends(file),
-      tests: findTestFiles(file, baseDir),
+      tests: findTestFiles(file, baseDir, config.testPatterns),
       lines: getLineCount(absPath)
     }
   }

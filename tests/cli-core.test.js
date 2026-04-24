@@ -219,6 +219,22 @@ describe('main', () => {
       JSON.parse(cap.output())
     })
 
+    it('--files-only outputs sorted file paths as a JSON array', async () => {
+      const cap = captureOutput()
+      await main([root, '--files-only', '--compact'], { write: cap.write })
+      const result = JSON.parse(cap.output())
+      expect(result).toEqual([
+        'src/calc.js', 'src/main.js', 'src/math.js', 'tests/math.test.js'
+      ])
+    })
+
+    it('--files-only combined with --dependents-of filters then lists paths', async () => {
+      const cap = captureOutput()
+      await main([root, '--files-only', '--dependents-of', 'src/math.js', '--compact'], { write: cap.write })
+      const result = JSON.parse(cap.output())
+      expect(result).toEqual(['src/calc.js', 'src/main.js'])
+    })
+
     it('rejects unknown flags with an error', async () => {
       const cap = captureOutput()
       const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
@@ -276,6 +292,12 @@ describe('main', () => {
         rmSync(root, { recursive: true, force: true })
       }
     })
+  })
+
+  it('help includes --files-only', async () => {
+    const cap = captureOutput()
+    await main(['--help'], { write: cap.write })
+    expect(cap.output()).toContain('--files-only')
   })
 
   it('help includes --include', async () => {

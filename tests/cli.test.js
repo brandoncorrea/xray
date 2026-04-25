@@ -1,27 +1,37 @@
-import { describe, it, expect } from 'vitest'
-import { execFile } from 'node:child_process'
-import { promisify } from 'node:util'
-import { mkdtempSync, rmSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { fileURLToPath } from 'node:url'
-import { dirname, join } from 'node:path'
+import { describe, it, expect, vi } from 'vitest'
+import { run } from '../src/cli-core.js'
+import output from '../src/output.js'
 
-const exec = promisify(execFile)
-const cliPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'cli.js')
+function fakeProcess(...args) {
+  return {
+    argv: ['node', 'cli.js', ...args],
+    exit: vi.fn()
+  }
+}
 
-describe('cli entry point', () => {
-  it('prints help and exits 0', async () => {
-    const { stdout } = await exec('node', [cliPath, '--help'])
-    expect(stdout).toContain('Usage: xray')
+describe('run', () => {
+  it('passes argv.slice(2) to main and exits with the result', async () => {
+    const spy = vi.spyOn(output, 'log').mockImplementation(() => {})
+    const proc = fakeProcess('--help')
+    try {
+      await run(proc)
+      expect(spy.mock.calls[0][0]).toContain('Usage: xray')
+      expect(proc.exit).toHaveBeenCalledWith(0)
+    } finally {
+      spy.mockRestore()
+    }
   })
 
-  it('argv is sliced at index 2, not 1', async () => {
-    const tmp = mkdtempSync(join(tmpdir(), 'xray-cli-'))
+  it('slices argv at index 2, not 1', async () => {
+    const spy = vi.spyOn(output, 'log').mockImplementation(() => {})
+    // argv[1] is '--help', but slice(2) should skip it
+    const proc = { argv: ['node', '--help'], exit: vi.fn() }
     try {
-      const { stdout } = await exec('node', [cliPath, '--compact'], { cwd: tmp })
-      expect(stdout.trim()).toBe('{}')
+      await run(proc)
+      expect(spy.mock.calls[0][0]).not.toContain('Usage: xray')
+      expect(proc.exit).toHaveBeenCalledWith(0)
     } finally {
-      rmSync(tmp, { recursive: true, force: true })
+      spy.mockRestore()
     }
   })
 })

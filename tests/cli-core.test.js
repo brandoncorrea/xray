@@ -333,7 +333,7 @@ describe('CLI Core', () => {
         it('rejects conflicting query flags', async () => {
           const code = await main([root, '--file', 'src/math.js', '--dependents-of', 'src/math.js'], cap)
           expect(code).toBe(1)
-          expect(spy.mock.calls[0][0]).toContain('Conflicting query flags')
+          expect(spy.mock.calls[0][0]).toContain('--file, --dependents-of')
         })
 
         it('returns error for nonexistent scan directory', async () => {

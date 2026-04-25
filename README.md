@@ -31,6 +31,9 @@ xray backend/ --dependents-of src/db.js
 # Find all direct and transitive dependents
 xray backend/ --dependents-of src/db.js --transitive
 
+# Find all test files affected by a change
+xray backend/ --tests-for src/db.js
+
 # Find all modules a given file imports
 xray backend/ --dependencies-of src/db.js
 
@@ -106,7 +109,7 @@ Example output:
 | Code | Meaning                                |
 |------|----------------------------------------|
 | `0`  | Success                                |
-| `1`  | Unknown flag(s) or conflicting queries |
+| `1`  | Error (unknown flags, conflicting queries, or bad directory) |
 
 ## Configuration
 
@@ -195,7 +198,7 @@ xray is built for AI agent workflows in Gas Town. Agents use xray to:
 
 - **Orient quickly** -- scan an unfamiliar codebase and understand its module structure without reading every file.
 - **Scope changes** -- before modifying a module, check `--dependents-of` to understand what will be affected.
-- **Find tests** -- the `tests` field maps source files to their test files, so agents know exactly which tests to run after a change.
+- **Find tests** -- `--tests-for` returns all test files affected by a change, including tests for transitive dependents.
 - **Trace dependencies** -- `--dependencies-of` shows the import chain, helping agents understand data flow and module boundaries.
 - **Estimate effort** -- the `lines` field gives a quick sense of module size before committing to read it.
 - **Minimize tokens** -- `--files-only` returns just file paths for quick orientation before targeted queries.
@@ -203,14 +206,14 @@ xray is built for AI agent workflows in Gas Town. Agents use xray to:
 Typical agent workflow:
 
 ```bash
-# 1. Generate the index for the project
-xray backend/ -o xray-index.json
+# 1. Orient: what files are in this project?
+xray backend/ --files-only
 
-# 2. Before changing a file, check its dependents
-xray backend/ --dependents-of src/db/instance.js
+# 2. Before changing a file, check its blast radius
+xray backend/ --dependents-of src/db/instance.js --transitive
 
 # 3. After changes, run only affected tests
-xray backend/ --file src/db/instance.js | jq '.["src/db/instance.js"].tests[]'
+xray backend/ --tests-for src/db/instance.js
 ```
 
 This replaces ad-hoc `grep` and `find` commands with structured, reliable module metadata.

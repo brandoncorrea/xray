@@ -16,6 +16,7 @@ Options:
   -o, --output <file>       Write JSON to file instead of stdout
   --file <path>             Show detail for a single source file
   --dependents-of <path>    List files that import the given module
+  --transitive              Expand --dependents-of to full transitive closure
   --dependencies-of <path>  List modules imported by the given file
   --include <dir>           Scan only this directory (repeatable)
   --exclude <dir>           Skip directory during scan (repeatable)

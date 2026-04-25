@@ -18,6 +18,8 @@ export function parseArgs(args) {
       parsed.include.push(args[++i])
     else if (arg === '--exclude')
       parsed.exclude.push(args[++i])
+    else if (arg === '--transitive')
+      parsed.transitive = true
     else if (arg === '--files-only')
       parsed.filesOnly = true
     else if (arg === '--compact')

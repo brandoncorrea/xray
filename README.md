@@ -28,6 +28,9 @@ xray backend/ --file src/handlers/feed.js
 # Find all files that import a given module
 xray backend/ --dependents-of src/db.js
 
+# Find all direct and transitive dependents
+xray backend/ --dependents-of src/db.js --transitive
+
 # Find all modules a given file imports
 xray backend/ --dependencies-of src/db.js
 
@@ -85,6 +88,7 @@ Example output:
 | `-o, --output <file>`       | Write JSON to a file instead of stdout               |
 | `--file <path>`             | Show detail for a single source file                 |
 | `--dependents-of <path>`    | List files that import the given module               |
+| `--transitive`              | Expand `--dependents-of` to full transitive closure   |
 | `--dependencies-of <path>`  | List modules imported by the given file               |
 | `--files-only`              | Output only file paths as a JSON array               |
 | `--include <dir>`           | Scan only this directory (repeatable)                |
@@ -147,6 +151,14 @@ xray backend/ --dependents-of src/db/instance.js
 ```
 
 Returns the subset of the index showing only files that depend on `src/db/instance.js`. Useful for understanding the blast radius of a change.
+
+### Find all transitive dependents
+
+```bash
+xray backend/ --dependents-of src/db/instance.js --transitive
+```
+
+Walks the full reverse dependency graph. If A imports B imports C, `--dependents-of C --transitive` returns both B and A.
 
 ### Find what a module imports
 

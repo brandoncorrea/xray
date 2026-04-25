@@ -168,6 +168,33 @@ describe('CLI Core', () => {
         expect(JSON.parse(cap.output())).toEqual({})
       })
 
+      it('--dependents-of --transitive returns full transitive closure', async () => {
+        await main([root, '--dependents-of', 'src/math.js', '--transitive', '--compact'], cap)
+        const result = JSON.parse(cap.output())
+        expect(Object.keys(result).sort()).toEqual(['src/calc.js', 'src/main.js'])
+      })
+
+      it('--dependents-of --transitive walks multi-hop chains', async () => {
+        const chainRoot = setupFixture({
+          'a.js': 'export const a = 1\n',
+          'b.js': "import { a } from './a.js'\nexport const b = a\n",
+          'c.js': "import { b } from './b.js'\nexport const c = b\n",
+        })
+        try {
+          await main([chainRoot, '--dependents-of', 'a.js', '--transitive', '--compact'], cap)
+          const result = JSON.parse(cap.output())
+          expect(Object.keys(result).sort()).toEqual(['b.js', 'c.js'])
+        } finally {
+          rmdir(chainRoot)
+        }
+      })
+
+      it('--files-only combined with --dependents-of --transitive lists paths', async () => {
+        await main([root, '--files-only', '--dependents-of', 'src/math.js', '--transitive', '--compact'], cap)
+        const result = JSON.parse(cap.output())
+        expect(result).toEqual(['src/calc.js', 'src/main.js'])
+      })
+
       it('--dependencies-of lists modules imported by the target', async () => {
         await main([root, '--dependencies-of', 'src/main.js', '--compact'], cap)
         const result = JSON.parse(cap.output())
@@ -322,6 +349,11 @@ describe('CLI Core', () => {
     it('help includes --files-only', async () => {
       await main(['--help'], cap)
       expect(cap.output()).toContain('--files-only')
+    })
+
+    it('help includes --transitive', async () => {
+      await main(['--help'], cap)
+      expect(cap.output()).toContain('--transitive')
     })
 
     it('help includes --include', async () => {

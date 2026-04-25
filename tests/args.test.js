@@ -16,4 +16,12 @@ describe('parseArgs', () => {
   it('-v is an alias for --version', () => {
     expect(parseArgs(['-v']).version).toBe(true)
   })
+
+  it('--transitive sets transitive flag', () => {
+    expect(parseArgs(['--transitive']).transitive).toBe(true)
+  })
+
+  it('--transitive is undefined when not provided', () => {
+    expect(parseArgs([]).transitive).toBeUndefined()
+  })
 })

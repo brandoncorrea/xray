@@ -35,9 +35,8 @@ function filterDependentsTransitive(target, index) {
   const result = {}
   const queue = [target]
   const visited = new Set([target])
-  while (queue.length) {
-    const current = queue.shift()
-    const entry = index[current]
+  for (let i = 0; i < queue.length; i++) {
+    const entry = index[queue[i]]
     if (!entry) continue
     for (const dep of entry.dependents || []) {
       if (!visited.has(dep)) {

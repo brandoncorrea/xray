@@ -17,5 +17,6 @@ export function createSilentOutput() {
 export default {
   log(message) { impl.log(message) },
   error(message) { impl.error(message) },
-  configure(output) { impl = output }
+  configure(output) { impl = output },
+  getImpl() { return impl }
 }

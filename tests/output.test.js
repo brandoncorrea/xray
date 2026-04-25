@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
 import output, { createConsoleOutput } from '../src/output.js'
 
 function mockWrite(spyOn) {
@@ -6,40 +6,28 @@ function mockWrite(spyOn) {
 }
 
 describe('createConsoleOutput', () => {
-  let out, stdoutSpy, stderrSpy
+  let stdoutSpy, stderrSpy, oldOutput
 
-  beforeEach(() => {
+  beforeAll(() => {
+    oldOutput = output.getImpl()
+    output.configure(createConsoleOutput())
     stdoutSpy = mockWrite(process.stdout)
     stderrSpy = mockWrite(process.stderr)
-    out = createConsoleOutput()
   })
 
-  afterEach(() => {
+  afterAll(() => {
+    output.configure(oldOutput)
     stdoutSpy.mockRestore()
     stderrSpy.mockRestore()
   })
 
   it('log writes to stdout', () => {
-    out.log('hello')
+    output.log('hello')
     expect(stdoutSpy).toHaveBeenCalledWith('hello')
   })
 
   it('error writes to stderr', () => {
-    out.error('oops')
+    output.error('oops')
     expect(stderrSpy).toHaveBeenCalledWith('oops')
-  })
-})
-
-describe('default output namespace', () => {
-  it('log delegates to impl', () => {
-    const spy = mockWrite(process.stdout)
-    output.configure(createConsoleOutput())
-    try {
-      output.log('test message')
-      expect(spy).toHaveBeenCalledWith('test message')
-    } finally {
-      spy.mockRestore()
-      output.configure(createConsoleOutput())
-    }
   })
 })

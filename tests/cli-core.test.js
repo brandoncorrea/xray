@@ -329,6 +329,18 @@ describe('CLI Core', () => {
           const msg = spy.mock.calls[0][0]
           expect(msg).toMatch(/^Unknown flags: --bogus, --nope/)
         })
+
+        it('rejects conflicting query flags', async () => {
+          const code = await main([root, '--file', 'src/math.js', '--dependents-of', 'src/math.js'], cap)
+          expect(code).toBe(1)
+          expect(spy.mock.calls[0][0]).toContain('Conflicting query flags')
+        })
+
+        it('returns error for nonexistent scan directory', async () => {
+          const code = await main(['/nonexistent/path', '--compact'], cap)
+          expect(code).toBe(1)
+          expect(spy.mock.calls[0][0]).toContain('Cannot scan directory')
+        })
       })
     })
 

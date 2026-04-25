@@ -30,9 +30,6 @@ Options:
 
 Config: xray.config.js (extensions, exclude, include, testPatterns)`
 
-const require = createRequire(import.meta.url)
-const { version: VERSION } = require('../package.json')
-
 export async function run(proc) {
   const result = await main(proc.argv.slice(2))
   proc.exit(result)
@@ -58,10 +55,16 @@ export async function main(argv, { write = defaultWrite } = {}) {
   if (args.help)
     write(HELP + '\n')
   else if (args.version)
-    write(VERSION + '\n')
+    write(getVersion() + '\n')
   else
     return await doScan(args, write)
   return 0
+}
+
+function getVersion() {
+  const require = createRequire(import.meta.url)
+  const { version } = require('../package.json')
+  return version
 }
 
 async function doScan(args, write) {

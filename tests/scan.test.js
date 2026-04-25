@@ -263,6 +263,41 @@ describe('scan', () => {
     expect(result['src/math.js'].dependents).toEqual(['src/index.js'])
   })
 
+  it('excludes node_modules automatically', () => {
+    root = setupFixture({
+      'src/app.js': 'export function main() {}\n',
+      'node_modules/lib/index.js': 'export function lib() {}\n'
+    })
+
+    const result = scan(root, {}, defaults())
+    expect(Object.keys(result)).toEqual(['src/app.js'])
+    expect(Object.keys(result)).not.toContain('node_modules/lib/index.js')
+  })
+
+  it('ignores non-relative imports', () => {
+    root = setupFixture({
+      'src/app.js': [
+        "import express from 'express'",
+        'export function main() { return express() }'
+      ].join('\n')
+    })
+
+    const result = scan(root, {}, defaults())
+    expect(result['src/app.js'].dependencies).toEqual([])
+  })
+
+  it('filters out imports that resolve outside the scan root', () => {
+    root = setupFixture({
+      'app.js': [
+        "import { x } from '../outside.js'",
+        'export const y = x'
+      ].join('\n')
+    })
+
+    const result = scan(root, {}, defaults())
+    expect(result['app.js'].dependencies).toEqual([])
+  })
+
   it('exclude pattern uses regex boundary — does not match partial directory names', () => {
     root = setupFixture({
       'src/scripts/build.js': 'export function build() {}\n',

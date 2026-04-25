@@ -190,12 +190,13 @@ describe('main', () => {
       JSON.parse(cap.output())
     })
 
-    it('--pretty outputs indented JSON', async () => {
+    it('--pretty outputs 2-space indented JSON', async () => {
       const cap = captureOutput()
       await main([root, '--pretty'], { write: cap.write })
       const lines = cap.output().trim().split('\n')
       expect(lines.length).toBeGreaterThan(1)
-      expect(cap.output()).toContain('  ')
+      const indentedLine = lines.find(l => l.startsWith(' '))
+      expect(indentedLine).toMatch(/^ {2}\S/)
       JSON.parse(cap.output())
     })
 
@@ -237,26 +238,26 @@ describe('main', () => {
       expect(result).toEqual(['src/calc.js', 'src/main.js'])
     })
 
-    it('rejects unknown flags with an error', async () => {
+    it('rejects unknown flag with singular error', async () => {
       const cap = captureOutput()
       const spy = vi.spyOn(output, 'error')
       try {
         const code = await main([root, '--bogus', '--compact'], { write: cap.write })
         expect(code).toBe(1)
-        expect(spy).toHaveBeenCalled()
-        expect(spy.mock.calls[0][0]).toContain('--bogus')
+        expect(spy.mock.calls[0][0]).toMatch(/^Unknown flag:/)
       } finally {
         spy.mockRestore()
       }
     })
 
-    it('rejects multiple unknown flags listing all of them', async () => {
+    it('rejects multiple unknown flags with plural error', async () => {
       const cap = captureOutput()
       const spy = vi.spyOn(output, 'error')
       try {
         const code = await main([root, '--bogus', '--nope'], { write: cap.write })
         expect(code).toBe(1)
         const msg = spy.mock.calls[0][0]
+        expect(msg).toMatch(/^Unknown flags:/)
         expect(msg).toContain('--bogus')
         expect(msg).toContain('--nope')
       } finally {

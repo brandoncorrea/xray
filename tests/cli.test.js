@@ -16,8 +16,6 @@ describe('cli entry point', () => {
   })
 
   it('argv is sliced at index 2, not 1', async () => {
-    // slice(2) → ['--compact'] → scans empty cwd → outputs '{}\n', exits 0
-    // slice(1) → ['/path/to/cli.js', '--compact'] → treats cli.js path as dir → ENOTDIR crash
     const tmp = mkdtempSync(join(tmpdir(), 'xray-cli-'))
     try {
       const { stdout } = await exec('node', [cliPath, '--compact'], { cwd: tmp })

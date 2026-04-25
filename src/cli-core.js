@@ -27,6 +27,11 @@ Options:
 
 Config: xray.config.js (extensions, exclude, include, testPatterns)`
 
+export async function run(proc) {
+  const result = await main(proc.argv.slice(2))
+  proc.exit(result)
+}
+
 export async function main(argv, { write = defaultWrite } = {}) {
   const args = parseArgs(argv)
   if (args.unknown.length) {

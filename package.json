@@ -12,6 +12,7 @@
     "test:coverage": "vitest run --coverage",
     "test:coverage:open": "vitest run --coverage && open coverage/index.html"
   },
+  "license": "MIT",
   "dependencies": {
     "acorn": "^8.16.0",
     "acorn-jsx": "^5.3.2"

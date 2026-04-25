@@ -58,6 +58,20 @@ describe('CLI Core', () => {
       await run(proc)
       expect(proc.exit).toHaveBeenCalledWith(0)
     })
+
+    it('exits 0 after a successful scan', async () => {
+      const root = setupFixture({
+        'src/app.js': 'export const x = 1\n',
+        'xray.config.js': 'export default {}\n'
+      })
+      const proc = fakeProcess('cli.js', root, '--compact')
+      try {
+        await run(proc)
+        expect(proc.exit).toHaveBeenCalledWith(0)
+      } finally {
+        rmdir(root)
+      }
+    })
   })
 
   describe('main', () => {
@@ -333,7 +347,13 @@ describe('CLI Core', () => {
         it('rejects conflicting query flags', async () => {
           const code = await main([root, '--file', 'src/math.js', '--dependents-of', 'src/math.js'], cap)
           expect(code).toBe(1)
-          expect(spy.mock.calls[0][0]).toContain('--file, --dependents-of')
+          expect(spy.mock.calls[0][0]).toMatch(/Conflicting query flags: --file, --dependents-of\./)
+        })
+
+        it('rejects three conflicting query flags', async () => {
+          const code = await main([root, '--file', 'a', '--dependents-of', 'b', '--tests-for', 'c'], cap)
+          expect(code).toBe(1)
+          expect(spy.mock.calls[0][0]).toMatch(/--file, --dependents-of, --tests-for/)
         })
 
         it('returns error for nonexistent scan directory', async () => {

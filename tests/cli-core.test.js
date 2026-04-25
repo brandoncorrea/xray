@@ -247,11 +247,19 @@ describe('CLI Core', () => {
       })
 
       it('--files-only outputs sorted file paths as a JSON array', async () => {
-        await main([root, '--files-only', '--compact'], cap)
-        const result = JSON.parse(cap.output())
-        expect(result).toEqual([
-          'src/calc.js', 'src/main.js', 'src/math.js', 'tests/math.test.js'
-        ])
+        // Fixture keys are already alphabetical; use a separate fixture
+        // where insertion order differs from sorted order
+        const unsorted = setupFixture({
+          'src/zebra.js': 'export const z = 1\n',
+          'src/alpha.js': 'export const a = 2\n'
+        })
+        try {
+          await main([unsorted, '--files-only', '--compact'], cap)
+          const result = JSON.parse(cap.output())
+          expect(result).toEqual(['src/alpha.js', 'src/zebra.js'])
+        } finally {
+          rmSync(unsorted, { recursive: true, force: true })
+        }
       })
 
       it('--files-only combined with --dependents-of filters then lists paths', async () => {
@@ -281,9 +289,7 @@ describe('CLI Core', () => {
           const code = await main([root, '--bogus', '--nope'], cap)
           expect(code).toBe(1)
           const msg = spy.mock.calls[0][0]
-          expect(msg).toMatch(/^Unknown flags:/)
-          expect(msg).toContain('--bogus')
-          expect(msg).toContain('--nope')
+          expect(msg).toMatch(/^Unknown flags: --bogus, --nope/)
         })
       })
     })

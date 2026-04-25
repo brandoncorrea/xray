@@ -70,6 +70,13 @@ export default {
     expect(DEFAULTS.exclude).toEqual([])
   })
 
+  it('returns a copy of defaults, not the original object', async () => {
+    const config = await loadConfigFromFile()
+    config.include = ['mutated']
+    const fresh = await loadConfigFromFile()
+    expect(fresh.include).toEqual([])
+  })
+
   it('config values replace defaults (not merge)', async () => {
     const config = await loadConfigFromFile(`
 export default {

@@ -98,8 +98,15 @@ const QUERY_FLAGS = ['file', 'dependentsOf', 'dependenciesOf', 'testsFor']
 
 function findConflictingQueries(args) {
   const active = QUERY_FLAGS.filter(f => args[f])
-  if (active.length <= 1) return null
-  return active.map(f => '--' + f.replace(/([A-Z])/g, '-$1').toLowerCase()).join(', ')
+  if (active.length > 1)
+    return active.map(normalizeFlag).join(', ')
+}
+
+function normalizeFlag(flag) {
+  const normal = flag
+    .replace(/([A-Z])/g, '-$1')
+    .toLowerCase()
+  return '--' + normal
 }
 
 function sortKeys(obj) {

@@ -258,7 +258,7 @@ describe('CLI Core', () => {
           const result = JSON.parse(cap.output())
           expect(result).toEqual(['src/alpha.js', 'src/zebra.js'])
         } finally {
-          rmSync(unsorted, { recursive: true, force: true })
+          rmdir(unsorted)
         }
       })
 

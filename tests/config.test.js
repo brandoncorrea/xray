@@ -4,62 +4,61 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { loadConfig, DEFAULTS } from '../src/config.js'
 
+function writeConfig(dir, content) {
+  writeFileSync(join(dir, 'xray.config.js'), content)
+}
+
+function makeTempDir() {
+  return mkdtempSync(join(tmpdir(), 'xray-cfg-'))
+}
+
+function rmdir(dir) {
+  rmSync(dir, { recursive: true })
+}
+
+async function loadConfigFromFile(content) {
+  const dir = makeTempDir()
+  try {
+    if (content != null) writeConfig(dir, content)
+    return await loadConfig(dir)
+  } finally {
+    rmdir(dir)
+  }
+}
+
 describe('loadConfig', () => {
   it('returns defaults when no config file exists', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'xray-cfg-'))
-    try {
-      const config = await loadConfig(dir)
-      expect(config).toEqual(DEFAULTS)
-    } finally {
-      rmSync(dir, { recursive: true })
-    }
+    const config = await loadConfigFromFile()
+    expect(config).toEqual(DEFAULTS)
   })
 
   it('loads and merges config from xray.config.js', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'xray-cfg-'))
-    try {
-      writeFileSync(join(dir, 'xray.config.js'), `
+    const config = await loadConfigFromFile(`
 export default {
   extensions: ['.js', '.jsx'],
   exclude: ['coverage/'],
 }
 `)
-      const config = await loadConfig(dir)
-      expect(config.extensions).toEqual(['.js', '.jsx'])
-      expect(config.exclude).toEqual(['coverage/'])
-      expect(config.testPatterns).toEqual(DEFAULTS.testPatterns)
-    } finally {
-      rmSync(dir, { recursive: true })
-    }
+    expect(config.extensions).toEqual(['.js', '.jsx'])
+    expect(config.exclude).toEqual(['coverage/'])
+    expect(config.testPatterns).toEqual(DEFAULTS.testPatterns)
   })
 
   it('returns defaults when config file exists but lacks default export', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'xray-cfg-'))
-    try {
-      writeFileSync(join(dir, 'xray.config.js'), `
+    const config = await loadConfigFromFile(`
 export const extensions = ['.ts']
 `)
-      const config = await loadConfig(dir)
-      expect(config).toEqual(DEFAULTS)
-    } finally {
-      rmSync(dir, { recursive: true })
-    }
+    expect(config).toEqual(DEFAULTS)
   })
 
   it('loads include from config', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'xray-cfg-'))
-    try {
-      writeFileSync(join(dir, 'xray.config.js'), `
+    const config = await loadConfigFromFile(`
 export default {
   include: ['src', 'shared'],
 }
 `)
-      const config = await loadConfig(dir)
-      expect(config.include).toEqual(['src', 'shared'])
-      expect(config.extensions).toEqual(DEFAULTS.extensions)
-    } finally {
-      rmSync(dir, { recursive: true })
-    }
+    expect(config.include).toEqual(['src', 'shared'])
+    expect(config.extensions).toEqual(DEFAULTS.extensions)
   })
 
   it('includes TypeScript extensions in defaults', async () => {
@@ -68,18 +67,12 @@ export default {
   })
 
   it('config values replace defaults (not merge)', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'xray-cfg-'))
-    try {
-      writeFileSync(join(dir, 'xray.config.js'), `
+    const config = await loadConfigFromFile(`
 export default {
   extensions: ['.ts', '.tsx'],
 }
 `)
-      const config = await loadConfig(dir)
-      expect(config.extensions).toEqual(['.ts', '.tsx'])
-      expect(config.exclude).toEqual(DEFAULTS.exclude)
-    } finally {
-      rmSync(dir, { recursive: true })
-    }
+    expect(config.extensions).toEqual(['.ts', '.tsx'])
+    expect(config.exclude).toEqual(DEFAULTS.exclude)
   })
 })

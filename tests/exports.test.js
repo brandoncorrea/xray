@@ -1,79 +1,88 @@
-import { describe, it, expect, afterEach, vi } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { extractExports } from '../src/exports.js'
 import output from '../src/output.js'
 import { writeFileSync, mkdtempSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 
-describe('extractExports', () => {
-  let dir
+function makeTempDir() {
+  return mkdtempSync(join(tmpdir(), 'xray-exports-'))
+}
 
-  function writeTempFile(content, filename = 'test.js') {
-    dir = mkdtempSync(join(tmpdir(), 'xray-exports-'))
-    const file = join(dir, filename)
-    writeFileSync(file, content)
-    return file
+function rmdir(dir) {
+  if (dir)
+    rmSync(dir, { recursive: true, force: true })
+}
+
+function createFile(dir, content, filename = 'test.js') {
+  const file = join(dir, filename)
+  writeFileSync(file, content)
+  return file
+}
+
+function loadExports(content, filename) {
+  const dir = makeTempDir()
+  try {
+    return extractExports(createFile(dir, content, filename))
+  } finally {
+    rmdir(dir)
   }
+}
 
-  afterEach(() => {
-    if (dir)
-      rmSync(dir, { recursive: true, force: true })
-  })
-
+describe('extractExports', () => {
   it('extracts export const', () => {
-    const file = writeTempFile('export const foo = 42\nexport const bar = "hi"\n')
-    const result = extractExports(file)
+    const result = loadExports('export const foo = 42\nexport const bar = "hi"\n')
     expect(result).toEqual({ exports: ['foo', 'bar'], reExports: [] })
   })
 
   it('extracts export function', () => {
-    const file = writeTempFile('export function bar() {}\n')
-    expect(extractExports(file)).toEqual({ exports: ['bar'], reExports: [] })
+    const result = loadExports('export function bar() {}\n')
+    expect(result).toEqual({ exports: ['bar'], reExports: [] })
   })
 
   it('extracts export async function', () => {
-    const file = writeTempFile('export async function qux() {}\n')
-    expect(extractExports(file)).toEqual({ exports: ['qux'], reExports: [] })
+    const result = loadExports('export async function qux() {}\n')
+    expect(result).toEqual({ exports: ['qux'], reExports: [] })
   })
 
   it('extracts export class', () => {
-    const file = writeTempFile('export class Baz {}\n')
-    expect(extractExports(file)).toEqual({ exports: ['Baz'], reExports: [] })
+    const result = loadExports('export class Baz {}\n')
+    expect(result).toEqual({ exports: ['Baz'], reExports: [] })
   })
 
   it('extracts named export list', () => {
-    const file = writeTempFile('const a = 1\nconst b = 2\nexport { a, b }\n')
-    expect(extractExports(file)).toEqual({ exports: ['a', 'b'], reExports: [] })
+    const result = loadExports('const a = 1\nconst b = 2\nexport { a, b }\n')
+    expect(result).toEqual({ exports: ['a', 'b'], reExports: [] })
   })
 
   it('extracts re-exports from another module', () => {
-    const file = writeTempFile("export { foo, bar } from './other.js'\n")
-    expect(extractExports(file)).toEqual({ exports: ['foo', 'bar'], reExports: [] })
+    const result = loadExports("export { foo, bar } from './other.js'\n")
+    expect(result).toEqual({ exports: ['foo', 'bar'], reExports: [] })
   })
 
   it('extracts aliased named exports', () => {
-    const file = writeTempFile("const internal = 1\nexport { internal as external }\n")
-    expect(extractExports(file)).toEqual({ exports: ['external'], reExports: [] })
+    const result = loadExports("const internal = 1\nexport { internal as external }\n")
+    expect(result).toEqual({ exports: ['external'], reExports: [] })
   })
 
   it('tracks export default function', () => {
-    const file = writeTempFile('export default function main() {}\nexport const named = 1\n')
-    expect(extractExports(file)).toEqual({ exports: ['default', 'named'], reExports: [] })
+    const result = loadExports('export default function main() {}\nexport const named = 1\n')
+    expect(result).toEqual({ exports: ['default', 'named'], reExports: [] })
   })
 
   it('tracks export default class', () => {
-    const file = writeTempFile('export default class App {}\n')
-    expect(extractExports(file)).toEqual({ exports: ['default'], reExports: [] })
+    const result = loadExports('export default class App {}\n')
+    expect(result).toEqual({ exports: ['default'], reExports: [] })
   })
 
   it('tracks export default expression', () => {
-    const file = writeTempFile('export default 42\n')
-    expect(extractExports(file)).toEqual({ exports: ['default'], reExports: [] })
+    const result = loadExports('export default 42\n')
+    expect(result).toEqual({ exports: ['default'], reExports: [] })
   })
 
   it('ignores comments that look like exports', () => {
-    const file = writeTempFile('// export const fake = 1\nexport const real = 2\n')
-    expect(extractExports(file)).toEqual({ exports: ['real'], reExports: [] })
+    const result = loadExports('// export const fake = 1\nexport const real = 2\n')
+    expect(result).toEqual({ exports: ['real'], reExports: [] })
   })
 
   it('handles mixed export styles', () => {
@@ -88,30 +97,29 @@ describe('extractExports', () => {
       'export default class Main {}',
       '// export const commented = true'
     ].join('\n')
-    const file = writeTempFile(source)
-    const result = extractExports(file)
+    const result = loadExports(source)
     expect(result).toEqual({ exports: ['VERSION', 'scan', 'Scanner', 'init', 'internal', 'helper', 'default'], reExports: [] })
   })
 
   it('returns empty result for file with no exports', () => {
-    const file = writeTempFile('const x = 1\n')
-    expect(extractExports(file)).toEqual({ exports: [], reExports: [] })
+    const result = loadExports('const x = 1\n')
+    expect(result).toEqual({ exports: [], reExports: [] })
   })
 
   it('extracts export let and export var', () => {
-    const file = writeTempFile('export let a = 1\nexport var b = 2\n')
-    expect(extractExports(file)).toEqual({ exports: ['a', 'b'], reExports: [] })
+    const result = loadExports('export let a = 1\nexport var b = 2\n')
+    expect(result).toEqual({ exports: ['a', 'b'], reExports: [] })
   })
 
   it('extracts exports from minified single-line file', () => {
-    const file = writeTempFile('export const a=1\nexport function b(){}\nexport class C{}')
-    expect(extractExports(file)).toEqual({ exports: ['a', 'b', 'C'], reExports: [] })
+    const result = loadExports('export const a=1\nexport function b(){}\nexport class C{}')
+    expect(result).toEqual({ exports: ['a', 'b', 'C'], reExports: [] })
   })
 
   it('ignores block comments containing export syntax', () => {
     const source = '/* export const fake = 1 */\nexport const real = 2\n'
-    const file = writeTempFile(source)
-    expect(extractExports(file)).toEqual({ exports: ['real'], reExports: [] })
+    const result = loadExports(source)
+    expect(result).toEqual({ exports: ['real'], reExports: [] })
   })
 
   it('extracts multi-line export list', () => {
@@ -125,17 +133,18 @@ describe('extractExports', () => {
       '  c',
       '}'
     ].join('\n')
-    const file = writeTempFile(source)
-    expect(extractExports(file)).toEqual({ exports: ['a', 'b', 'c'], reExports: [] })
+    const result = loadExports(source)
+    expect(result).toEqual({ exports: ['a', 'b', 'c'], reExports: [] })
   })
 
   it('returns empty result for malformed JS that acorn cannot parse', () => {
-    const file = writeTempFile('export const = ;; {{{')
-    expect(extractExports(file)).toEqual({ exports: [], reExports: [] })
+    const result = loadExports('export const = ;; {{{')
+    expect(result).toEqual({ exports: [], reExports: [] })
   })
 
   it('writes a warning when parsing fails', () => {
-    const file = writeTempFile('export const = ;; {{{')
+    const dir = makeTempDir()
+    const file = createFile(dir, 'export const = ;; {{{')
     const spy = vi.spyOn(output, 'error')
     try {
       extractExports(file)
@@ -145,27 +154,28 @@ describe('extractExports', () => {
       expect(msg).toContain(file)
     } finally {
       spy.mockRestore()
+      rmdir(dir)
     }
   })
 
   it('extracts string-literal aliased export name', () => {
-    const file = writeTempFile("const foo = 1\nexport { foo as 'bar-baz' }\n")
-    expect(extractExports(file)).toEqual({ exports: ['bar-baz'], reExports: [] })
+    const result = loadExports("const foo = 1\nexport { foo as 'bar-baz' }\n")
+    expect(result).toEqual({ exports: ['bar-baz'], reExports: [] })
   })
 
   it('extracts exports from JSX file', () => {
-    const file = writeTempFile('export function App() { return <div /> }\nexport const name = "app"\n', 'component.jsx')
-    expect(extractExports(file)).toEqual({ exports: ['App', 'name'], reExports: [] })
+    const result = loadExports('export function App() { return <div /> }\nexport const name = "app"\n', 'component.jsx')
+    expect(result).toEqual({ exports: ['App', 'name'], reExports: [] })
   })
 
   it('extracts exports from TSX file', () => {
-    const file = writeTempFile('export function Page() { return <main /> }\nexport const route = "/home"\n', 'page.tsx')
-    expect(extractExports(file)).toEqual({ exports: ['Page', 'route'], reExports: [] })
+    const result = loadExports('export function Page() { return <main /> }\nexport const route = "/home"\n', 'page.tsx')
+    expect(result).toEqual({ exports: ['Page', 'route'], reExports: [] })
   })
 
   it('tracks export * (star re-exports)', () => {
-    const file = writeTempFile("export * from './foo.js'\n")
-    expect(extractExports(file)).toEqual({
+    const result = loadExports("export * from './foo.js'\n")
+    expect(result).toEqual({
       exports: [],
       reExports: ['./foo.js']
     })
@@ -173,8 +183,8 @@ describe('extractExports', () => {
 
   it('tracks multiple star re-exports', () => {
     const source = "export * from './a.js'\nexport * from './b.js'\nexport * from './c.js'\n"
-    const file = writeTempFile(source)
-    expect(extractExports(file)).toEqual({
+    const result = loadExports(source)
+    expect(result).toEqual({
       exports: [],
       reExports: ['./a.js', './b.js', './c.js']
     })
@@ -187,8 +197,8 @@ describe('extractExports', () => {
       "export { helper } from './other.js'",
       "export * from './types.js'"
     ].join('\n')
-    const file = writeTempFile(source)
-    expect(extractExports(file)).toEqual({
+    const result = loadExports(source)
+    expect(result).toEqual({
       exports: ['version', 'helper'],
       reExports: ['./utils.js', './types.js']
     })

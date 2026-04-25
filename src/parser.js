@@ -4,7 +4,7 @@ import acornJsx from 'acorn-jsx'
 import output from './output.js'
 
 const JSX_EXTENSIONS = ['.jsx', '.tsx']
-const jsxParser = Parser.extend(acornJsx())
+export const jsxParser = Parser.extend(acornJsx())
 const PARSER_OPTIONS = { sourceType: 'module', ecmaVersion: 'latest' }
 
 export function analyzeFile(filePath) {
@@ -31,11 +31,14 @@ export function analyzeFile(filePath) {
   return { exports, reExports, imports }
 }
 
+export function selectParser(filePath) {
+  return isJsx(filePath) ? jsxParser : Parser
+}
+
 function parseFileAst(filePath) {
   try {
     const source = readFileSync(filePath, 'utf-8')
-    const parser = isJsx(filePath) ? jsxParser : Parser
-    return parser.parse(source, PARSER_OPTIONS).body
+    return selectParser(filePath).parse(source, PARSER_OPTIONS).body
   } catch (err) {
     output.error(`xray: warning: failed to parse ${filePath}: ${err.message}\n`)
     return []

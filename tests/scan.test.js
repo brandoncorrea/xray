@@ -306,6 +306,15 @@ describe('scan', () => {
     expect(result['src/app.js'].dependencies).toEqual([])
   })
 
+  it('normalizes backslash separators in import paths', () => {
+    root = setupFixture({
+      'src/app.js': "import { x } from './sub\\\\dir\\\\helper.js'\nexport const y = x\n"
+    })
+
+    const result = scan(root, {}, defaults())
+    expect(result['src/app.js'].dependencies).toEqual(['src/sub/dir/helper.js'])
+  })
+
   it('filters out imports that resolve outside the scan root', () => {
     root = setupFixture({
       'app.js': [

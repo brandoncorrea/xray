@@ -50,7 +50,7 @@ function filterTestsFor(target, index) {
   for (const file of files)
     for (const test of index[file].tests || [])
       tests.add(test)
-  return [...tests].sort()
+  return [...tests]
 }
 
 function filterDependencies(dependenciesOf, index) {

@@ -58,7 +58,7 @@ async function doScan(args, write) {
   }
   const index = scan(directory, options, config)
   const result = filterIndex(args, index)
-  const data = Array.isArray(result) ? result
+  const data = Array.isArray(result) ? result.sort()
     : args.filesOnly ? Object.keys(result).sort()
     : result
   writeOutput(data, args, write)

@@ -17,6 +17,7 @@ Options:
   --file <path>             Show detail for a single source file
   --dependents-of <path>    List files that import the given module
   --transitive              Expand --dependents-of to full transitive closure
+  --tests-for <path>        List test files for target and its transitive dependents
   --dependencies-of <path>  List modules imported by the given file
   --include <dir>           Scan only this directory (repeatable)
   --exclude <dir>           Skip directory during scan (repeatable)
@@ -57,7 +58,9 @@ async function doScan(args, write) {
   }
   const index = scan(directory, options, config)
   const result = filterIndex(args, index)
-  const data = args.filesOnly ? Object.keys(result).sort() : result
+  const data = Array.isArray(result) ? result
+    : args.filesOnly ? Object.keys(result).sort()
+    : result
   writeOutput(data, args, write)
 }
 

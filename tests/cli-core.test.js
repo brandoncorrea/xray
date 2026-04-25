@@ -288,6 +288,24 @@ describe('CLI Core', () => {
         expect(result).toEqual(['src/calc.js', 'src/main.js'])
       })
 
+      it('--tests-for returns test files for target and its transitive dependents', async () => {
+        await main([root, '--tests-for', 'src/math.js', '--compact'], cap)
+        const result = JSON.parse(cap.output())
+        expect(result).toEqual(['tests/math.test.js'])
+      })
+
+      it('--tests-for for leaf file with no tests returns empty array', async () => {
+        await main([root, '--tests-for', 'src/main.js', '--compact'], cap)
+        const result = JSON.parse(cap.output())
+        expect(result).toEqual([])
+      })
+
+      it('--tests-for for unknown file returns empty array', async () => {
+        await main([root, '--tests-for', 'src/nope.js', '--compact'], cap)
+        const result = JSON.parse(cap.output())
+        expect(result).toEqual([])
+      })
+
       describe('errors', () => {
         let spy
 
@@ -354,6 +372,11 @@ describe('CLI Core', () => {
     it('help includes --transitive', async () => {
       await main(['--help'], cap)
       expect(cap.output()).toContain('--transitive')
+    })
+
+    it('help includes --tests-for', async () => {
+      await main(['--help'], cap)
+      expect(cap.output()).toContain('--tests-for')
     })
 
     it('help includes --include', async () => {

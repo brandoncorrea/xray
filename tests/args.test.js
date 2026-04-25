@@ -24,4 +24,12 @@ describe('parseArgs', () => {
   it('--transitive is undefined when not provided', () => {
     expect(parseArgs([]).transitive).toBeUndefined()
   })
+
+  it('--tests-for captures the file path', () => {
+    expect(parseArgs(['--tests-for', 'src/utils.js']).testsFor).toBe('src/utils.js')
+  })
+
+  it('--tests-for is undefined when not provided', () => {
+    expect(parseArgs([]).testsFor).toBeUndefined()
+  })
 })

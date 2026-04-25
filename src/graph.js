@@ -8,16 +8,19 @@ export function buildGraph(baseDir, config) {
 
 function compileSources(baseDir, config) {
   const graph = {}
-  for (const file of discoverFiles(baseDir, config)) {
-    const absPath = join(baseDir, file)
-    const analysis = analyzeFile(absPath)
-    graph[file] = {
-      imports: resolveImports(analysis.imports, absPath, baseDir),
-      exports: analysis.exports,
-      reExports: analysis.reExports
-    }
-  }
+  for (const file of discoverFiles(baseDir, config))
+    graph[file] = compileSource(baseDir, file)
   return graph
+}
+
+function compileSource(baseDir, file) {
+  const absPath = join(baseDir, file)
+  const analysis = analyzeFile(absPath)
+  return {
+    imports: resolveImports(analysis.imports, absPath, baseDir),
+    exports: analysis.exports,
+    reExports: analysis.reExports
+  }
 }
 
 function wrapGraph(graph) {

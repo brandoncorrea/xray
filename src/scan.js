@@ -4,12 +4,13 @@ import { findTestFiles } from './testFiles.js'
 import { buildGraph } from './graph.js'
 
 export function scan(directory, options, config) {
+  const merged = { ...config }
   if (options.include?.length)
-    config.include = options.include
+    merged.include = options.include
   if (options.exclude?.length)
-    config.exclude = distinctConcat(config.exclude, options.exclude)
-  const graph = buildGraph(directory, config)
-  return buildIndex(directory, graph, config.testPatterns)
+    merged.exclude = distinctConcat(config.exclude, options.exclude)
+  const graph = buildGraph(directory, merged)
+  return buildIndex(directory, graph, merged.testPatterns)
 }
 
 function buildIndex(baseDir, graph, testPatterns) {

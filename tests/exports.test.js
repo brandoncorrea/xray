@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { extractExports } from '../src/exports.js'
+import { analyzeFile } from '../src/parser.js'
 import output from '../src/output.js'
 import { writeFileSync, mkdtempSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
@@ -23,13 +23,14 @@ function createFile(dir, content, filename = 'test.js') {
 function loadExports(content, filename) {
   const dir = makeTempDir()
   try {
-    return extractExports(createFile(dir, content, filename))
+    const { exports, reExports } = analyzeFile(createFile(dir, content, filename))
+    return { exports, reExports }
   } finally {
     rmdir(dir)
   }
 }
 
-describe('extractExports', () => {
+describe('analyzeFile exports', () => {
   it('extracts export const', () => {
     const result = loadExports('export const foo = 42\nexport const bar = "hi"\n')
     expect(result).toEqual({ exports: ['foo', 'bar'], reExports: [] })
@@ -147,7 +148,7 @@ describe('extractExports', () => {
     const file = createFile(dir, 'export const = ;; {{{')
     const spy = vi.spyOn(output, 'error')
     try {
-      extractExports(file)
+      analyzeFile(file)
       expect(spy).toHaveBeenCalledOnce()
       const msg = spy.mock.calls[0][0]
       expect(msg).toContain('xray: warning:')

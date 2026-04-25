@@ -112,8 +112,7 @@ describe('CLI Core', () => {
             "import { subtract } from './math.js'",
             'export function run() { return double(subtract(10, 3)) }'
           ].join('\n'),
-          'tests/math.test.js': '// test for math\n',
-          'xray.config.js': 'export default {}\n'
+          'tests/math.test.js': '// test for math\n'
         })
       })
 
@@ -125,7 +124,7 @@ describe('CLI Core', () => {
         await main([root, '--compact'], cap)
         const index = JSON.parse(cap.output())
         expect(Object.keys(index).sort()).toEqual([
-          'src/calc.js', 'src/main.js', 'src/math.js', 'tests/math.test.js', 'xray.config.js'
+          'src/calc.js', 'src/main.js', 'src/math.js', 'tests/math.test.js'
         ])
         expect(index['src/math.js'].exports).toEqual(['add', 'subtract'])
       })

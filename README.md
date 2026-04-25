@@ -89,6 +89,7 @@ Example output:
 | `--file <path>`             | Show detail for a single source file                 |
 | `--dependents-of <path>`    | List files that import the given module               |
 | `--transitive`              | Expand `--dependents-of` to full transitive closure   |
+| `--tests-for <path>`        | List test files for target and its transitive dependents |
 | `--dependencies-of <path>`  | List modules imported by the given file               |
 | `--files-only`              | Output only file paths as a JSON array               |
 | `--include <dir>`           | Scan only this directory (repeatable)                |
@@ -98,12 +99,14 @@ Example output:
 | `--help, -h`                | Show help message                                    |
 | `--version, -v`             | Show version                                         |
 
+`--file`, `--dependents-of`, `--dependencies-of`, and `--tests-for` are mutually exclusive query flags. Only one may be used per invocation.
+
 ## Exit Codes
 
-| Code | Meaning                    |
-|------|----------------------------|
-| `0`  | Success                    |
-| `1`  | Unknown flag(s) provided   |
+| Code | Meaning                                |
+|------|----------------------------------------|
+| `0`  | Success                                |
+| `1`  | Unknown flag(s) or conflicting queries |
 
 ## Configuration
 

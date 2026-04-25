@@ -19,6 +19,7 @@ Options:
   --transitive              Expand --dependents-of to full transitive closure
   --tests-for <path>        List test files for target and its transitive dependents
   --dependencies-of <path>  List modules imported by the given file
+  (--file, --dependents-of, --dependencies-of, --tests-for are mutually exclusive)
   --include <dir>           Scan only this directory (repeatable)
   --exclude <dir>           Skip directory during scan (repeatable)
   --files-only              Output only file paths as a JSON array
@@ -40,12 +41,17 @@ export async function main(argv, { write = defaultWrite } = {}) {
     output.error(`Unknown flag${args.unknown.length > 1 ? 's' : ''}: ${args.unknown.join(', ')}\n`)
     return 1
   }
+  const conflict = findConflictingQueries(args)
+  if (conflict) {
+    output.error(`Conflicting query flags: ${conflict}. Use only one of --file, --dependents-of, --dependencies-of, --tests-for.\n`)
+    return 1
+  }
   if (args.help)
     write(HELP + '\n')
   else if (args.version)
     write(VERSION + '\n')
   else
-    await doScan(args, write)
+    return await doScan(args, write)
   return 0
 }
 
@@ -56,9 +62,16 @@ async function doScan(args, write) {
     exclude: args.exclude,
     include: args.include
   }
-  const index = scan(directory, options, config)
+  let index
+  try {
+    index = scan(directory, options, config)
+  } catch {
+    output.error(`Cannot scan directory: ${directory}\n`)
+    return 1
+  }
   const result = filterIndex(args, index)
   writeOutput(result, args, write)
+  return 0
 }
 
 function writeOutput(data, args, write) {
@@ -79,6 +92,14 @@ function sortResult(result, args) {
   return Array.isArray(result) ? result.sort()
     : args.filesOnly ? Object.keys(result).sort()
     : sortKeys(result)
+}
+
+const QUERY_FLAGS = ['file', 'dependentsOf', 'dependenciesOf', 'testsFor']
+
+function findConflictingQueries(args) {
+  const active = QUERY_FLAGS.filter(f => args[f])
+  if (active.length <= 1) return null
+  return active.map(f => '--' + f.replace(/([A-Z])/g, '-$1').toLowerCase()).join(', ')
 }
 
 function sortKeys(obj) {

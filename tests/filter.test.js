@@ -92,6 +92,15 @@ describe('filterIndex', () => {
       expect(result).toEqual([])
     })
 
+    it('handles dependents with no tests property', () => {
+      const noTestsProp = {
+        'src/a.js': { dependencies: [], tests: ['tests/a.test.js'] },
+        'src/b.js': { dependencies: ['src/a.js'] }
+      }
+      const result = filterIndex({ testsFor: 'src/a.js' }, noTestsProp)
+      expect(result).toEqual(['tests/a.test.js'])
+    })
+
     it('deduplicates test files shared by multiple dependents', () => {
       const sharedTestIndex = {
         'src/a.js': { dependencies: [], tests: ['tests/shared.test.js'] },

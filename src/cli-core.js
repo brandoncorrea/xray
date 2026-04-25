@@ -71,5 +71,5 @@ function defaultWrite(json, outputPath) {
 function shouldPrettyPrint(args) {
   if (args.pretty) return true
   if (args.compact) return false
-  return args.output || Boolean(process.stdout.isTTY)
+  return args.output || process.stdout.isTTY
 }

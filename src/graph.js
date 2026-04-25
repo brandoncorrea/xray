@@ -53,12 +53,8 @@ function walk(baseDir, relDir, extensions, excludeRegExp, include) {
 }
 
 function fileEntries(baseDir, relDir) {
-  const absDir = toAbsoluteDirectory(baseDir, relDir)
+  const absDir = join(baseDir, relDir)
   return readdirSync(absDir, { withFileTypes: true })
-}
-
-function toAbsoluteDirectory(baseDir, relDir) {
-  return relDir ? join(baseDir, relDir) : baseDir
 }
 
 function toRelativePath(relDir, entryName) {
@@ -86,7 +82,7 @@ function matchesInclude(file, include) {
 }
 
 function toExcludeRegExp(exclusion) {
-  return new RegExp(`(^|/)${exclusion}/`)
+  return RegExp(`(^|/)${exclusion}/`)
 }
 
 function resolveImports(rawImports, absPath, baseDir) {

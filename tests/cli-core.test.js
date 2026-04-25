@@ -43,11 +43,16 @@ describe('CLI Core', () => {
     })
 
     it('slices argv at index 2, not 1', async () => {
-      // argv[1] is '--help', but slice(2) should skip it
-      const proc = fakeProcess('--help')
-      await run(proc)
-      expect(spy.mock.calls[0][0]).not.toContain('Usage: xray')
-      expect(proc.exit).toHaveBeenCalledWith(0)
+      // argv[1] is '--version', but slice(2) should skip it → scans empty dir
+      const root = setupFixture({})
+      const proc = fakeProcess('--version', root, '--compact')
+      try {
+        await run(proc)
+        expect(spy.mock.calls[0][0]).not.toContain('Usage: xray')
+        expect(proc.exit).toHaveBeenCalledWith(0)
+      } finally {
+        rmSync(root, { recursive: true, force: true })
+      }
     })
   })
 

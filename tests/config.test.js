@@ -66,6 +66,10 @@ export default {
     expect(DEFAULTS.extensions).toContain('.tsx')
   })
 
+  it('defaults exclude to an empty array', () => {
+    expect(DEFAULTS.exclude).toEqual([])
+  })
+
   it('config values replace defaults (not merge)', async () => {
     const config = await loadConfigFromFile(`
 export default {

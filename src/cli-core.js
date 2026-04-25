@@ -66,7 +66,8 @@ async function doScan(args, write) {
 
 function writeOutput(data, args, write) {
   const indent = shouldPrettyPrint(args) ? 2 : undefined
-  const json = JSON.stringify(data, null, indent) + '\n'
+  const sorted = Array.isArray(data) ? data : sortKeys(data)
+  const json = JSON.stringify(sorted, null, indent) + '\n'
   write(json, args.output)
 }
 
@@ -75,6 +76,13 @@ function defaultWrite(json, outputPath) {
     writeFileSync(outputPath, json)
   else
     output.log(json)
+}
+
+function sortKeys(obj) {
+  const sorted = {}
+  for (const key of Object.keys(obj).sort())
+    sorted[key] = obj[key]
+  return sorted
 }
 
 function shouldPrettyPrint(args) {

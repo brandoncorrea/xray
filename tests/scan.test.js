@@ -263,6 +263,26 @@ describe('scan', () => {
     expect(result['src/math.js'].dependents).toEqual(['src/index.js'])
   })
 
+  it('excludes files inside an excluded directory even without file-level filtering', () => {
+    root = setupFixture({
+      'src/app.js': 'export function main() {}\n',
+      'vendor/deep/nested/lib.js': 'export function lib() {}\n'
+    })
+
+    const result = scan(root, { exclude: ['vendor'] }, defaults())
+    expect(Object.keys(result)).toEqual(['src/app.js'])
+  })
+
+  it('include matches file by exact name', () => {
+    root = setupFixture({
+      'app.js': 'export function main() {}\n',
+      'other.js': 'export function other() {}\n'
+    })
+
+    const result = scan(root, { include: ['app.js'] }, defaults())
+    expect(Object.keys(result)).toEqual(['app.js'])
+  })
+
   it('excludes node_modules automatically', () => {
     root = setupFixture({
       'src/app.js': 'export function main() {}\n',

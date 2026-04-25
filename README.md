@@ -1,4 +1,4 @@
-# xray
+# @bwawan/xray
 
 Module index generator for JavaScript and TypeScript projects. Produces a JSON map of every source file with exports, dependencies, dependents, associated test files, and line counts.
 
@@ -7,7 +7,7 @@ Designed to help AI agents orient themselves in a codebase without reading every
 ## Installation
 
 ```bash
-npm install -g xray
+npm install -g @bwawan/xray
 ```
 
 ## Usage

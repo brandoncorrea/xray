@@ -1,5 +1,5 @@
 {
-  "name": "xray",
+  "name": "@bwawan/xray",
   "version": "0.1.0",
   "type": "module",
   "bin": {

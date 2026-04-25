@@ -58,15 +58,12 @@ async function doScan(args, write) {
   }
   const index = scan(directory, options, config)
   const result = filterIndex(args, index)
-  const data = Array.isArray(result) ? result.sort()
-    : args.filesOnly ? Object.keys(result).sort()
-    : result
-  writeOutput(data, args, write)
+  writeOutput(result, args, write)
 }
 
 function writeOutput(data, args, write) {
   const indent = shouldPrettyPrint(args) ? 2 : undefined
-  const sorted = Array.isArray(data) ? data : sortKeys(data)
+  const sorted = sortResult(data, args)
   const json = JSON.stringify(sorted, null, indent) + '\n'
   write(json, args.output)
 }
@@ -76,6 +73,12 @@ function defaultWrite(json, outputPath) {
     writeFileSync(outputPath, json)
   else
     output.log(json)
+}
+
+function sortResult(result, args) {
+  return Array.isArray(result) ? result.sort()
+    : args.filesOnly ? Object.keys(result).sort()
+    : sortKeys(result)
 }
 
 function sortKeys(obj) {

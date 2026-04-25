@@ -19,21 +19,34 @@ function compileSource(baseDir, file) {
   return {
     imports: resolveImports(analysis.imports, absPath, baseDir),
     exports: analysis.exports,
-    reExports: analysis.reExports
+    reExports: analysis.reExports,
+    lines: analysis.lines
   }
 }
 
 function wrapGraph(graph) {
   const keys = Object.keys(graph)
+  const reverseMap = buildReverseMap(keys, graph)
   return {
     files: () => keys,
     dependencies: file => graph[file].imports,
-    dependents: file => keys.filter(k => graph[k].imports.includes(file)),
+    dependents: file => reverseMap[file] || [],
     fileExports: file => ({
       exports: graph[file].exports,
       reExports: graph[file].reExports
-    })
+    }),
+    lines: file => graph[file].lines
   }
+}
+
+function buildReverseMap(keys, graph) {
+  const reverse = {}
+  for (const file of keys)
+    for (const dep of graph[file].imports) {
+      if (!reverse[dep]) reverse[dep] = []
+      reverse[dep].push(file)
+    }
+  return reverse
 }
 
 function discoverFiles(baseDir, config) {
@@ -85,7 +98,11 @@ function matchesInclude(file, include) {
 }
 
 function toExcludeRegExp(exclusion) {
-  return RegExp(`(^|/)${exclusion}/`)
+  return RegExp(`(^|/)${escapeRegExp(exclusion)}/`)
+}
+
+function escapeRegExp(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 function resolveImports(rawImports, absPath, baseDir) {

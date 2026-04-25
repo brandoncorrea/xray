@@ -2,24 +2,24 @@ import { describe, it, expect } from 'vitest'
 import { filterIndex } from '../src/filter.js'
 
 const index = {
-  'src/app.js': { dependencies: ['src/utils.js'], exports: ['main'] },
-  'src/utils.js': { dependencies: [], exports: ['helper'] }
+  'src/app.js': { dependencies: ['src/utils.js'], dependents: [], exports: ['main'] },
+  'src/utils.js': { dependencies: [], dependents: ['src/app.js'], exports: ['helper'] }
 }
 
 const chainIndex = {
-  'src/a.js': { dependencies: [], exports: ['a'] },
-  'src/b.js': { dependencies: ['src/a.js'], exports: ['b'] },
-  'src/c.js': { dependencies: ['src/b.js'], exports: ['c'] },
-  'src/d.js': { dependencies: ['src/c.js'], exports: ['d'] },
-  'src/unrelated.js': { dependencies: [], exports: ['x'] }
+  'src/a.js': { dependencies: [], dependents: ['src/b.js'], exports: ['a'] },
+  'src/b.js': { dependencies: ['src/a.js'], dependents: ['src/c.js'], exports: ['b'] },
+  'src/c.js': { dependencies: ['src/b.js'], dependents: ['src/d.js'], exports: ['c'] },
+  'src/d.js': { dependencies: ['src/c.js'], dependents: [], exports: ['d'] },
+  'src/unrelated.js': { dependencies: [], dependents: [], exports: ['x'] }
 }
 
 const testsIndex = {
-  'src/a.js': { dependencies: [], tests: ['tests/a.test.js'] },
-  'src/b.js': { dependencies: ['src/a.js'], tests: ['tests/b.test.js'] },
-  'src/c.js': { dependencies: ['src/b.js'], tests: [] },
-  'src/d.js': { dependencies: ['src/c.js'], tests: ['tests/d.test.js'] },
-  'src/unrelated.js': { dependencies: [], tests: ['tests/unrelated.test.js'] }
+  'src/a.js': { dependencies: [], dependents: ['src/b.js'], tests: ['tests/a.test.js'] },
+  'src/b.js': { dependencies: ['src/a.js'], dependents: ['src/c.js'], tests: ['tests/b.test.js'] },
+  'src/c.js': { dependencies: ['src/b.js'], dependents: ['src/d.js'], tests: [] },
+  'src/d.js': { dependencies: ['src/c.js'], dependents: [], tests: ['tests/d.test.js'] },
+  'src/unrelated.js': { dependencies: [], dependents: [], tests: ['tests/unrelated.test.js'] }
 }
 
 describe('filterIndex', () => {
@@ -27,6 +27,11 @@ describe('filterIndex', () => {
     const result = filterIndex({ file: 'src/nope.js' }, index)
     expect(result).toEqual({})
     expect(Object.keys(result)).toHaveLength(0)
+  })
+
+  it('--file normalizes leading ./ in path', () => {
+    const result = filterIndex({ file: './src/app.js' }, index)
+    expect(Object.keys(result)).toEqual(['src/app.js'])
   })
 
   it('--dependencies-of for unknown file returns empty object', () => {
@@ -85,8 +90,8 @@ describe('filterIndex', () => {
 
     it('returns empty array when no tests exist for target or dependents', () => {
       const noTestsIndex = {
-        'src/a.js': { dependencies: [], tests: [] },
-        'src/b.js': { dependencies: ['src/a.js'], tests: [] }
+        'src/a.js': { dependencies: [], dependents: ['src/b.js'], tests: [] },
+        'src/b.js': { dependencies: ['src/a.js'], dependents: [], tests: [] }
       }
       const result = filterIndex({ testsFor: 'src/a.js' }, noTestsIndex)
       expect(result).toEqual([])
@@ -94,8 +99,8 @@ describe('filterIndex', () => {
 
     it('handles dependents with no tests property', () => {
       const noTestsProp = {
-        'src/a.js': { dependencies: [], tests: ['tests/a.test.js'] },
-        'src/b.js': { dependencies: ['src/a.js'] }
+        'src/a.js': { dependencies: [], dependents: ['src/b.js'], tests: ['tests/a.test.js'] },
+        'src/b.js': { dependencies: ['src/a.js'], dependents: [] }
       }
       const result = filterIndex({ testsFor: 'src/a.js' }, noTestsProp)
       expect(result).toEqual(['tests/a.test.js'])
@@ -103,8 +108,8 @@ describe('filterIndex', () => {
 
     it('deduplicates test files shared by multiple dependents', () => {
       const sharedTestIndex = {
-        'src/a.js': { dependencies: [], tests: ['tests/shared.test.js'] },
-        'src/b.js': { dependencies: ['src/a.js'], tests: ['tests/shared.test.js'] }
+        'src/a.js': { dependencies: [], dependents: ['src/b.js'], tests: ['tests/shared.test.js'] },
+        'src/b.js': { dependencies: ['src/a.js'], dependents: [], tests: ['tests/shared.test.js'] }
       }
       const result = filterIndex({ testsFor: 'src/a.js' }, sharedTestIndex)
       expect(result).toEqual(['tests/shared.test.js'])

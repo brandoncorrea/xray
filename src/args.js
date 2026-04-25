@@ -7,19 +7,19 @@ export function parseArgs(args) {
     else if (arg === '--version' || arg === '-v')
       parsed.version = true
     else if (arg === '--output' || arg === '-o')
-      parsed.output = args[++i]
+      parsed.output = requireValue(args, ++i, arg)
     else if (arg === '--file')
-      parsed.file = args[++i]
+      parsed.file = requireValue(args, ++i, arg)
     else if (arg === '--dependents-of')
-      parsed.dependentsOf = args[++i]
+      parsed.dependentsOf = requireValue(args, ++i, arg)
     else if (arg === '--dependencies-of')
-      parsed.dependenciesOf = args[++i]
+      parsed.dependenciesOf = requireValue(args, ++i, arg)
     else if (arg === '--include')
-      parsed.include.push(args[++i])
+      parsed.include.push(requireValue(args, ++i, arg))
     else if (arg === '--exclude')
-      parsed.exclude.push(args[++i])
+      parsed.exclude.push(requireValue(args, ++i, arg))
     else if (arg === '--tests-for')
-      parsed.testsFor = args[++i]
+      parsed.testsFor = requireValue(args, ++i, arg)
     else if (arg === '--transitive')
       parsed.transitive = true
     else if (arg === '--files-only')
@@ -34,4 +34,10 @@ export function parseArgs(args) {
       parsed.dir = arg
   }
   return parsed
+}
+
+function requireValue(args, index, flag) {
+  if (index >= args.length)
+    throw new Error(`${flag} requires a value`)
+  return args[index]
 }

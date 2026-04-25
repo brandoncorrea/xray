@@ -36,7 +36,13 @@ export async function run(proc) {
 }
 
 export async function main(argv, { write = defaultWrite } = {}) {
-  const args = parseArgs(argv)
+  let args
+  try {
+    args = parseArgs(argv)
+  } catch (err) {
+    output.error(err.message + '\n')
+    return 1
+  }
   if (args.unknown.length) {
     output.error(`Unknown flag${args.unknown.length > 1 ? 's' : ''}: ${args.unknown.join(', ')}\n`)
     return 1

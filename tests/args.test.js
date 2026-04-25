@@ -32,4 +32,16 @@ describe('parseArgs', () => {
   it('--tests-for is undefined when not provided', () => {
     expect(parseArgs([]).testsFor).toBeUndefined()
   })
+
+  it('throws when --output has no value', () => {
+    expect(() => parseArgs(['--output'])).toThrow('--output requires a value')
+  })
+
+  it('throws when --file has no value', () => {
+    expect(() => parseArgs(['--file'])).toThrow('--file requires a value')
+  })
+
+  it('throws when --exclude has no value', () => {
+    expect(() => parseArgs(['--exclude'])).toThrow('--exclude requires a value')
+  })
 })

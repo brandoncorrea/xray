@@ -17,20 +17,17 @@ export function findTestFiles(sourceFile, projectRoot, testPatterns) {
   const candidates = new Set()
   for (const pattern of patterns)
     for (const candidate of candidatesFromPattern(pattern, sourceName, sourceDir))
-      if (isRelatedTestFile(candidate, sourceFile, projectRoot))
+      if (candidate !== sourceFile)
         candidates.add(candidate)
 
-  return [...candidates].sort()
+  return [...candidates]
+    .filter(c => existsSync(join(projectRoot, c)))
+    .sort()
 }
 
 function candidatesFromPattern(pattern, sourceName, sourceDir) {
   const resolvedPattern = resolvePattern(pattern, sourceDir)
   return expandBraces(withSourceName(resolvedPattern, sourceName))
-}
-
-function isRelatedTestFile(candidate, sourceFile, projectRoot) {
-  return candidate !== sourceFile
-    && existsSync(join(projectRoot, candidate))
 }
 
 function expandBraces(str) {

@@ -131,6 +131,8 @@ export default {
 
 CLI flags override config values: `--include` replaces config `include`, `--exclude` merges with config `exclude`.
 
+**Note:** xray executes `xray.config.js` via dynamic `import()`. Only scan directories you trust.
+
 ## Examples
 
 ### Full project scan

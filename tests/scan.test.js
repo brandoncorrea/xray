@@ -138,6 +138,17 @@ describe('scan', () => {
     expect(result['src/side-effect.js'].lines).toBe(1)
   })
 
+  it('escapes regex metacharacters in exclude patterns', () => {
+    root = setupFixture({
+      'src/app.js': 'export function main() {}\n',
+      'src/dist.old/report.js': 'export function report() {}\n'
+    })
+
+    const result = scan(root, { exclude: ['dist.old'] }, defaults())
+    expect(Object.keys(result)).not.toContain('src/dist.old/report.js')
+    expect(Object.keys(result)).toContain('src/app.js')
+  })
+
   it('excludes directories matching exclude patterns', () => {
     root = setupFixture({
       'src/app.js': 'export function main() {}\n',

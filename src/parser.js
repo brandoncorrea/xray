@@ -8,12 +8,12 @@ export const jsxParser = Parser.extend(acornJsx())
 const PARSER_OPTIONS = { sourceType: 'module', ecmaVersion: 'latest' }
 
 export function analyzeFile(filePath) {
-  const ast = parseFileAst(filePath)
+  const { body, lines } = parseFileAst(filePath)
   const exports = []
   const reExports = []
   const imports = []
 
-  for (const node of ast) {
+  for (const node of body) {
     if (node.type === 'ImportDeclaration')
       imports.push(node.source.value)
     else if (node.type === 'ExportNamedDeclaration') {
@@ -28,7 +28,7 @@ export function analyzeFile(filePath) {
     }
   }
 
-  return { exports, reExports, imports }
+  return { exports, reExports, imports, lines }
 }
 
 export function selectParser(filePath) {
@@ -38,11 +38,18 @@ export function selectParser(filePath) {
 function parseFileAst(filePath) {
   try {
     const source = readFileSync(filePath, 'utf-8')
-    return selectParser(filePath).parse(source, PARSER_OPTIONS).body
+    const body = selectParser(filePath).parse(source, PARSER_OPTIONS).body
+    return { body, lines: countLines(source) }
   } catch (err) {
     output.error(`xray: warning: failed to parse ${filePath}: ${err.message}\n`)
-    return []
+    return { body: [], lines: 0 }
   }
+}
+
+function countLines(source) {
+  if (!source) return 0
+  const lines = source.split('\n')
+  return source.endsWith('\n') ? lines.length - 1 : lines.length
 }
 
 function collectNamedExports(exports, node) {

@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { findTestFiles } from './testFiles.js'
 import { buildGraph } from './graph.js'
@@ -21,7 +20,6 @@ function buildIndex(baseDir, graph, testPatterns) {
 }
 
 function compileFileInfo(baseDir, graph, testPatterns, file) {
-  const absPath = join(baseDir, file)
   const { exports, reExports } = graph.fileExports(file)
   return {
     exports,
@@ -29,17 +27,10 @@ function compileFileInfo(baseDir, graph, testPatterns, file) {
     dependencies: graph.dependencies(file),
     dependents: graph.dependents(file),
     tests: findTestFiles(file, baseDir, testPatterns),
-    lines: getLineCount(absPath)
+    lines: graph.lines(file)
   }
 }
 
 function distinctConcat(coll1, coll2) {
   return [...new Set([...coll1, ...coll2])]
-}
-
-function getLineCount(path) {
-  const content = readFileSync(path, 'utf-8')
-  if (!content) return 0
-  const lines = content.split('\n')
-  return content.endsWith('\n') ? lines.length - 1 : lines.length
 }

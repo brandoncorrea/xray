@@ -1,15 +1,19 @@
 export function filterIndex(args, index) {
   if (args.testsFor)
-    return filterTestsFor(args.testsFor, index)
+    return filterTestsFor(normalizePath(args.testsFor), index)
   if (args.file)
-    return filterFile(args.file, index)
+    return filterFile(normalizePath(args.file), index)
   if (args.dependentsOf)
     return args.transitive
-      ? filterDependentsTransitive(args.dependentsOf, index)
-      : filterDependents(args.dependentsOf, index)
+      ? filterDependentsTransitive(normalizePath(args.dependentsOf), index)
+      : filterDependents(normalizePath(args.dependentsOf), index)
   if (args.dependenciesOf)
-    return filterDependencies(args.dependenciesOf, index)
+    return filterDependencies(normalizePath(args.dependenciesOf), index)
   return index
+}
+
+function normalizePath(path) {
+  return path.replace(/^\.\//, '')
 }
 
 function filterFile(file, index) {
@@ -17,11 +21,13 @@ function filterFile(file, index) {
   return entry ? { [file]: entry } : {}
 }
 
-function filterDependents(dependentsOf, index) {
+function filterDependents(target, index) {
   const filtered = {}
-  for (const [file, info] of Object.entries(index))
-    if (info.dependencies.includes(dependentsOf))
-      filtered[file] = info
+  const entry = index[target]
+  if (!entry) return filtered
+  for (const dep of entry.dependents || [])
+    if (index[dep])
+      filtered[dep] = index[dep]
   return filtered
 }
 
@@ -31,11 +37,13 @@ function filterDependentsTransitive(target, index) {
   const visited = new Set([target])
   while (queue.length) {
     const current = queue.shift()
-    for (const [file, info] of Object.entries(index)) {
-      if (!visited.has(file) && info.dependencies.includes(current)) {
-        visited.add(file)
-        result[file] = info
-        queue.push(file)
+    const entry = index[current]
+    if (!entry) continue
+    for (const dep of entry.dependents || []) {
+      if (!visited.has(dep)) {
+        visited.add(dep)
+        result[dep] = index[dep]
+        queue.push(dep)
       }
     }
   }

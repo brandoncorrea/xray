@@ -341,6 +341,12 @@ describe('CLI Core', () => {
           expect(code).toBe(1)
           expect(spy.mock.calls[0][0]).toContain('Cannot scan directory')
         })
+
+        it('returns error when flag is missing its value', async () => {
+          const code = await main(['--output'], cap)
+          expect(code).toBe(1)
+          expect(spy.mock.calls[0][0]).toContain('--output requires a value')
+        })
       })
     })
 

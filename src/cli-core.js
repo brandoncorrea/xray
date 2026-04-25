@@ -1,7 +1,7 @@
 import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { createRequire } from 'node:module'
 import { parseArgs } from './args.js'
-import { VERSION } from './index.js'
 import { filterIndex } from './filter.js'
 import output from './output.js'
 import { loadConfig } from './config.js'
@@ -29,6 +29,9 @@ Options:
   --version, -v             Show version
 
 Config: xray.config.js (extensions, exclude, include, testPatterns)`
+
+const require = createRequire(import.meta.url)
+const { version: VERSION } = require('../package.json')
 
 export async function run(proc) {
   const result = await main(proc.argv.slice(2))

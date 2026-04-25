@@ -25,33 +25,28 @@ function fakeProcess(...args) {
 describe('CLI Core', () => {
 
   describe('run', () => {
-    let spy
-
-    beforeEach(() => {
-      spy = vi.spyOn(output, 'log').mockImplementation(() => {})
-    })
-
-    afterEach(() => {
-      spy.mockRestore()
-    })
-
     it('passes argv.slice(2) to main and exits with the result', async () => {
+      const spy = vi.spyOn(output, 'log').mockImplementation(() => {})
       const proc = fakeProcess('cli.js', '--help')
-      await run(proc)
-      expect(spy.mock.calls[0][0]).toContain('Usage: xray')
-      expect(proc.exit).toHaveBeenCalledWith(0)
-    })
-
-    it('slices argv at index 2, not 1', async () => {
-      // argv[1] is '--version', but slice(2) should skip it → scans empty dir
-      const root = setupFixture({})
-      const proc = fakeProcess('--version', root, '--compact')
       try {
         await run(proc)
-        expect(spy.mock.calls[0][0]).not.toContain('Usage: xray')
+        expect(spy.mock.calls[0][0]).toContain('Usage: xray')
         expect(proc.exit).toHaveBeenCalledWith(0)
       } finally {
-        rmSync(root, { recursive: true, force: true })
+        spy.mockRestore()
+      }
+    })
+
+    it('strips first two argv elements before passing to main', async () => {
+      // argv = ['node', '--bogus', '--help'] → slice(2) = ['--help']
+      // If slice(1) were used, '--bogus' would be an unknown flag → exit 1
+      const spy = vi.spyOn(output, 'log').mockImplementation(() => {})
+      const proc = fakeProcess('--bogus', '--help')
+      try {
+        await run(proc)
+        expect(proc.exit).toHaveBeenCalledWith(0)
+      } finally {
+        spy.mockRestore()
       }
     })
   })

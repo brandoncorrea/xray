@@ -40,10 +40,32 @@ describe('filterIndex', () => {
     expect(Object.keys(result)).toHaveLength(0)
   })
 
-  describe('--dependents-of --transitive', () => {
+  describe('--dependents-of', () => {
     it('returns only direct dependents without --transitive', () => {
       const result = filterIndex({ dependentsOf: 'src/a.js' }, chainIndex)
       expect(Object.keys(result)).toEqual(['src/b.js'])
+    })
+
+    it('returns empty object for unknown target', () => {
+      const result = filterIndex({ dependentsOf: 'src/nope.js' }, chainIndex)
+      expect(result).toEqual({})
+    })
+
+    it('tolerates missing dependents property', () => {
+      const sparse = {
+        'src/a.js': { dependencies: [] },
+        'src/b.js': { dependencies: ['src/a.js'], dependents: [] }
+      }
+      const result = filterIndex({ dependentsOf: 'src/a.js' }, sparse)
+      expect(result).toEqual({})
+    })
+
+    it('skips dependents not present in the index', () => {
+      const dangling = {
+        'src/a.js': { dependencies: [], dependents: ['src/gone.js'] }
+      }
+      const result = filterIndex({ dependentsOf: 'src/a.js' }, dangling)
+      expect(result).toEqual({})
     })
 
     it('returns full transitive closure with --transitive', () => {
@@ -64,6 +86,15 @@ describe('filterIndex', () => {
     it('transitive for unknown file returns empty object', () => {
       const result = filterIndex({ dependentsOf: 'src/nope.js', transitive: true }, chainIndex)
       expect(result).toEqual({})
+    })
+
+    it('transitive tolerates missing dependents property mid-chain', () => {
+      const sparse = {
+        'src/a.js': { dependencies: [], dependents: ['src/b.js'] },
+        'src/b.js': { dependencies: ['src/a.js'] }
+      }
+      const result = filterIndex({ dependentsOf: 'src/a.js', transitive: true }, sparse)
+      expect(Object.keys(result)).toEqual(['src/b.js'])
     })
 
     it('--transitive without --dependents-of has no effect', () => {

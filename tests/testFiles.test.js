@@ -205,6 +205,15 @@ describe('findTestFiles', () => {
     expect(result).toEqual(['spec/lib/utils.js'])
   })
 
+  it('excludes the source file itself from custom pattern matches', () => {
+    root = setupTempProject([
+      'src/handlers/feed.js'
+    ])
+    const patterns = ['**/*.js']
+    const result = findRootFiles('src/handlers/feed.js', patterns)
+    expect(result).toEqual([])
+  })
+
   it('handles pattern without **/ (literal path with wildcard name)', () => {
     root = setupTempProject([
       'src/handlers/feed.js',
